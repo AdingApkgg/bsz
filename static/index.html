@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>不蒜子 - 极简网页计数器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --accent: #3b82f6; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.125rem; margin-bottom: 1rem; }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    pre { background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 0.875rem; }
+    code { color: #e5e5e5; }
+    .k { color: #c792ea; }
+    .s { color: #c3e88d; }
+    .c { color: #6b7280; }
+    .n { color: #f78c6c; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; }
+    a { color: var(--accent); text-decoration: none; }
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 600; color: var(--accent); }
+    .stat-label { font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem; }
+    @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>不蒜子.rs</h1>
+    <p class="subtitle">简洁的网站访客统计服务</p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="site_pv">-</div>
+        <div class="stat-label">站点访问</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="site_uv">-</div>
+        <div class="stat-label">站点访客</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="page_pv">-</div>
+        <div class="stat-label">本页访问</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>API 接口</h2>
+      <table>
+        <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+        <tr><td>POST</td><td>/api</td><td>统计并返回 PV/UV</td></tr>
+        <tr><td>GET</td><td>/api</td><td>仅获取 PV/UV (不计数)</td></tr>
+        <tr><td>PUT</td><td>/api</td><td>仅提交统计 (不返回)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>请求头</h2>
+      <table>
+        <tr><th>Header</th><th>说明</th></tr>
+        <tr><td>x-bsz-referer</td><td>页面 URL (必须)</td></tr>
+        <tr><td>Authorization</td><td>Bearer {token} (可选，用于识别访客)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>响应格式</h2>
+<pre><code>{
+  <span class="s">"success"</span>: <span class="k">true</span>,
+  <span class="s">"data"</span>: {
+    <span class="s">"site_pv"</span>: <span class="n">1234</span>,
+    <span class="s">"site_uv"</span>: <span class="n">567</span>,
+    <span class="s">"page_pv"</span>: <span class="n">89</span>,
+    <span class="s">"page_uv"</span>: <span class="n">42</span>
+  }
+}</code></pre>
+      <p>响应头 <code>Set-Bsz-Identity</code> 返回访客 token，下次请求时带上可识别同一访客。</p>
+    </div>
+
+    <div class="card">
+      <h2>使用示例</h2>
+<pre><code><span class="c">// 获取统计数据</span>
+<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'/api'</span>, {
+  method: <span class="s">'POST'</span>,
+  headers: {
+    <span class="s">'x-bsz-referer'</span>: location.href,
+    <span class="c">// 可选: 'Authorization': 'Bearer ' + token</span>
+  }
+});
+
+<span class="k">const</span> { data } = <span class="k">await</span> res.json();
+console.log(data.site_pv, data.page_pv);
+
+<span class="c">// 保存 token 用于识别访客</span>
+<span class="k">const</span> token = res.headers.get(<span class="s">'Set-Bsz-Identity'</span>);
+<span class="k">if</span> (token) localStorage.setItem(<span class="s">'bsz-id'</span>, token);</code></pre>
+    </div>
+
+    <div class="card">
+      <h2>完整示例</h2>
+<pre><code><span class="c">&lt;!-- HTML --&gt;</span>
+&lt;span id=<span class="s">"pv"</span>&gt;-&lt;/span&gt; 次访问
+
+<span class="c">&lt;!-- JavaScript --&gt;</span>
+&lt;script&gt;
+(<span class="k">async</span> () =&gt; {
+  <span class="k">const</span> token = localStorage.getItem(<span class="s">'bsz-id'</span>);
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://bsz.saop.cc/api'</span>, {
+    method: <span class="s">'POST'</span>,
+    headers: {
+      <span class="s">'x-bsz-referer'</span>: location.href,
+      ...(token && { <span class="s">'Authorization'</span>: <span class="s">'Bearer '</span> + token })
+    }
+  });
+  <span class="k">const</span> { data } = <span class="k">await</span> res.json();
+  document.getElementById(<span class="s">'pv'</span>).textContent = data.page_pv;
+  
+  <span class="k">const</span> id = res.headers.get(<span class="s">'Set-Bsz-Identity'</span>);
+  <span class="k">if</span> (id) localStorage.setItem(<span class="s">'bsz-id'</span>, id);
+})();
+&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/AdingApkgg/bsz">GitHub</a> · <a href="/admin">管理面板</a>
+  </footer>
+
+  <script>
+    (async () => {
+      const token = localStorage.getItem('bsz-id');
+      try {
+        const res = await fetch('/api', {
+          method: 'POST',
+          headers: {
+            'x-bsz-referer': location.href,
+            ...(token && { 'Authorization': 'Bearer ' + token })
+          }
+        });
+        const { success, data } = await res.json();
+        if (success) {
+          document.getElementById('site_pv').textContent = data.site_pv.toLocaleString();
+          document.getElementById('site_uv').textContent = data.site_uv.toLocaleString();
+          document.getElementById('page_pv').textContent = data.page_pv.toLocaleString();
+        }
+        const id = res.headers.get('Set-Bsz-Identity');
+        if (id) localStorage.setItem('bsz-id', id);
+      } catch (e) {}
+    })();
+  </script>
+</body>
+</html>

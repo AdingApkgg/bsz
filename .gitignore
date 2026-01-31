@@ -1,0 +1,25 @@
+# Build
+/target
+
+# Environment
+.env
+
+# Data files
+data.json
+data.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# History (local changes)
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
