@@ -11,14 +11,21 @@
 - **Sitemap 同步** - 从 busuanzi.ibruce.info 迁移数据
 - **兼容原版** - 支持 site_pv、site_uv、page_pv
 
-## 快速开始
+## 编译运行
 
 ```bash
-# 直接运行
-./busuanzi-rs
+# 安装 Rust (如未安装)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# 或使用 Podman/Docker
-podman-compose up -d
+# 克隆项目
+git clone https://github.com/AdingApkgg/bsz.git
+cd bsz
+
+# 编译
+cargo build --release
+
+# 运行
+./target/release/busuanzi-rs
 ```
 
 访问：
@@ -27,7 +34,11 @@ podman-compose up -d
 
 ## 配置
 
-通过环境变量或 `.env` 文件配置：
+复制 `.env.example` 为 `.env` 并修改：
+
+```bash
+cp .env.example .env
+```
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
@@ -51,7 +62,6 @@ podman-compose up -d
 ### 前端调用示例
 
 ```javascript
-// 统计当前页面
 fetch('https://your-domain.com/api', {
   method: 'POST',
   headers: { 'x-bsz-referer': location.href }
@@ -82,7 +92,6 @@ fetch('https://your-domain.com/api', {
 - 每 30 秒自动保存
 - Ctrl+C 退出时自动保存
 - 启动时自动加载
-- 支持事务，数据更安全
 
 备份只需复制 `data.db` 文件。可用任意 SQLite 工具查看/编辑。
 
@@ -93,22 +102,9 @@ fetch('https://your-domain.com/api', {
 3. 输入你的 sitemap.xml 地址
 4. 等待自动从 busuanzi.ibruce.info 拉取数据
 
-## 开发
-
-```bash
-cargo run              # 开发运行
-cargo build --release  # 构建发布版本
-```
-
 ## Nginx 反向代理
 
-参考 `nginx.conf.example` 配置 HTTP/3 + HTTP/2 + HSTS + SSL：
-
-```bash
-cp nginx.conf.example /etc/nginx/sites-available/bsz.conf
-# 修改 server_name 和证书路径
-nginx -t && nginx -s reload
-```
+参考 `nginx.conf.example` 配置 HTTP/3 + HTTP/2 + HSTS + SSL。
 
 ## 目录结构
 
@@ -120,8 +116,6 @@ nginx -t && nginx -s reload
 │   ├── middleware/    # 中间件
 │   └── main.rs        # 入口
 ├── static/            # 嵌入的静态文件
-├── Dockerfile
-├── compose.yml
 ├── nginx.conf.example # Nginx 配置示例
 └── data.db            # SQLite 数据库 (运行时生成)
 ```
