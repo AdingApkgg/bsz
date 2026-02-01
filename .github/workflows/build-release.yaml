@@ -38,9 +38,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
 
       - name: Install cross-compilation tools (Linux ARM64)
         if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -49,16 +52,13 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build
-        working-directory: server
-        run: |
-          cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare artifact
         shell: bash
         run: |
           mkdir -p dist
-          cp server/target/${{ matrix.target }}/release/busuanzi-rs${{ matrix.ext }} dist/busuanzi-rs-${{ matrix.name }}-${{ github.ref_name }}${{ matrix.ext }}
-          cp -r server/dist dist/static
+          cp target/${{ matrix.target }}/release/busuanzi-rs${{ matrix.ext }} dist/busuanzi-rs-${{ matrix.name }}-${{ github.ref_name }}${{ matrix.ext }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
