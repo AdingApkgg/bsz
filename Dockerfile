@@ -1,6 +1,12 @@
-FROM docker.io/library/rust:1.75-slim AS builder
+# Build stage
+FROM docker.io/library/rust:1.75 AS builder
 
 WORKDIR /app
+
+# Install build dependencies for rusqlite bundled
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Cache dependencies
 COPY Cargo.toml Cargo.lock ./
@@ -13,10 +19,13 @@ COPY static ./static
 COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
+# Runtime stage
 FROM docker.io/library/debian:bookworm-slim
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/busuanzi-rs .
 
