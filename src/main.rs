@@ -77,6 +77,7 @@ async fn main() {
         .route("/export", get(api::admin::export_handler))
         .route("/import", post(api::admin::import_handler))
         .route("/sync", get(api::admin::sync_handler))
+        .route("/sync/upload", post(api::admin::sync_upload_handler))
         .layer(axum_middleware::from_fn(
             middleware::admin_auth::admin_auth_middleware,
         ));

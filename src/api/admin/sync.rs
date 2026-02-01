@@ -1,8 +1,11 @@
 //! Sitemap sync handler
 
-use axum::extract::Query;
+use axum::extract::{Multipart, Query};
 use axum::response::sse::{Event, KeepAlive, Sse};
+use axum::response::{IntoResponse, Json};
+use dashmap::DashMap;
 use futures::stream::Stream;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
 use std::convert::Infallible;
@@ -13,54 +16,168 @@ use std::time::Duration;
 use crate::core::count::get_keys;
 use crate::state::STORE;
 
+// Temporary storage for uploaded sitemap URLs
+static UPLOADED_SITEMAPS: Lazy<DashMap<String, Vec<String>>> = Lazy::new(DashMap::new);
+
+enum SitemapSource {
+    Remote(String),
+    Uploaded(String),
+    None,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct SitemapSyncParams {
-    pub sitemap_url: String,
+    pub sitemap_url: Option<String>,
+    pub sync_id: Option<String>,
     pub concurrency: Option<usize>,
 }
 
+/// POST /api/admin/sync/upload - Upload XML file and get sync_id
+pub async fn sync_upload_handler(mut multipart: Multipart) -> impl IntoResponse {
+    let mut xml_content: Option<String> = None;
+
+    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
+        if field.name() == Some("file") {
+            match field.text().await {
+                Ok(text) => {
+                    xml_content = Some(text);
+                    break;
+                }
+                Err(e) => {
+                    return Json(json!({
+                        "success": false,
+                        "message": format!("读取文件失败: {}", e)
+                    }));
+                }
+            }
+        }
+    }
+
+    let xml = match xml_content {
+        Some(x) if !x.is_empty() => x,
+        _ => {
+            return Json(json!({
+                "success": false,
+                "message": "请上传 XML 文件"
+            }));
+        }
+    };
+
+    // Parse sitemap
+    let urls = match parse_sitemap(&xml) {
+        Ok(urls) => urls,
+        Err(e) => {
+            return Json(json!({
+                "success": false,
+                "message": format!("XML 解析失败: {}", e)
+            }));
+        }
+    };
+
+    if urls.is_empty() {
+        return Json(json!({
+            "success": false,
+            "message": "未找到有效的 URL"
+        }));
+    }
+
+    // Generate sync_id and store URLs
+    let sync_id = format!(
+        "{:x}",
+        md5::compute(format!("{}{:?}", chrono::Utc::now(), urls))
+    );
+    let url_count = urls.len();
+    UPLOADED_SITEMAPS.insert(sync_id.clone(), urls);
+
+    // Auto cleanup after 5 minutes
+    let cleanup_id = sync_id.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_secs(300)).await;
+        UPLOADED_SITEMAPS.remove(&cleanup_id);
+    });
+
+    Json(json!({
+        "success": true,
+        "sync_id": sync_id,
+        "url_count": url_count
+    }))
+}
+
 /// GET /api/admin/sync?sitemap_url=...&concurrency=3
+/// GET /api/admin/sync?sync_id=...&concurrency=3
 /// Sync data from sitemap + busuanzi.ibruce.info with SSE progress
 pub async fn sync_handler(
     Query(params): Query<SitemapSyncParams>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    let sitemap_url = params.sitemap_url;
     let concurrency = params.concurrency.unwrap_or(3).clamp(1, 10);
 
+    // Get URLs from either uploaded file or remote sitemap
+    let urls_source = if let Some(sync_id) = params.sync_id {
+        SitemapSource::Uploaded(sync_id)
+    } else if let Some(url) = params.sitemap_url {
+        SitemapSource::Remote(url)
+    } else {
+        SitemapSource::None
+    };
+
     let stream = async_stream::stream! {
-        yield Ok(Event::default().event("progress").data(
-            json!({"status": "fetching", "message": format!("正在获取 sitemap (并发: {})...", concurrency)}).to_string()
-        ));
-
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(30))
-            .pool_max_idle_per_host(concurrency)
-            .build()
-            .unwrap();
-
-        let sitemap_text = match client.get(&sitemap_url).send().await {
-            Ok(res) => match res.text().await {
-                Ok(text) => text,
-                Err(e) => {
-                    yield Ok(Event::default().event("error").data(
-                        json!({"message": format!("Failed to read sitemap: {}", e)}).to_string()
-                    ));
-                    return;
-                }
-            },
-            Err(e) => {
-                yield Ok(Event::default().event("error").data(
-                    json!({"message": format!("Failed to fetch sitemap: {}", e)}).to_string()
+        let urls = match urls_source {
+            SitemapSource::Uploaded(sync_id) => {
+                yield Ok(Event::default().event("progress").data(
+                    json!({"status": "parsing", "message": format!("使用上传的 sitemap (并发: {})...", concurrency)}).to_string()
                 ));
-                return;
-            }
-        };
 
-        let urls = match parse_sitemap(&sitemap_text) {
-            Ok(urls) => urls,
-            Err(e) => {
+                match UPLOADED_SITEMAPS.remove(&sync_id) {
+                    Some((_, urls)) => urls,
+                    None => {
+                        yield Ok(Event::default().event("error").data(
+                            json!({"message": "Sync ID 已过期或无效"}).to_string()
+                        ));
+                        return;
+                    }
+                }
+            }
+            SitemapSource::Remote(sitemap_url) => {
+                yield Ok(Event::default().event("progress").data(
+                    json!({"status": "fetching", "message": format!("正在获取 sitemap (并发: {})...", concurrency)}).to_string()
+                ));
+
+                let client = reqwest::Client::builder()
+                    .timeout(Duration::from_secs(30))
+                    .build()
+                    .unwrap();
+
+                let sitemap_text = match client.get(&sitemap_url).send().await {
+                    Ok(res) => match res.text().await {
+                        Ok(text) => text,
+                        Err(e) => {
+                            yield Ok(Event::default().event("error").data(
+                                json!({"message": format!("Failed to read sitemap: {}", e)}).to_string()
+                            ));
+                            return;
+                        }
+                    },
+                    Err(e) => {
+                        yield Ok(Event::default().event("error").data(
+                            json!({"message": format!("Failed to fetch sitemap: {}", e)}).to_string()
+                        ));
+                        return;
+                    }
+                };
+
+                match parse_sitemap(&sitemap_text) {
+                    Ok(urls) => urls,
+                    Err(e) => {
+                        yield Ok(Event::default().event("error").data(
+                            json!({"message": format!("Failed to parse sitemap: {}", e)}).to_string()
+                        ));
+                        return;
+                    }
+                }
+            }
+            SitemapSource::None => {
                 yield Ok(Event::default().event("error").data(
-                    json!({"message": format!("Failed to parse sitemap: {}", e)}).to_string()
+                    json!({"message": "请提供 sitemap_url 或 sync_id"}).to_string()
                 ));
                 return;
             }
@@ -78,10 +195,18 @@ pub async fn sync_handler(
             json!({"status": "syncing", "message": format!("发现 {} 个页面，开始并发同步...", total), "total": total, "current": 0}).to_string()
         ));
 
+        // Create HTTP client for fetching busuanzi stats
+        let client = Arc::new(
+            reqwest::Client::builder()
+                .timeout(Duration::from_secs(30))
+                .pool_max_idle_per_host(concurrency)
+                .build()
+                .unwrap()
+        );
+
         // Use channel for concurrent results
         let (tx, mut rx) = tokio::sync::mpsc::channel::<(usize, String, Result<(u64, u64, u64, String, String), String>)>(concurrency * 2);
         let semaphore = Arc::new(tokio::sync::Semaphore::new(concurrency));
-        let client = Arc::new(client);
 
         // Spawn concurrent tasks
         for (i, url) in urls.into_iter().enumerate() {
