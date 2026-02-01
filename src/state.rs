@@ -64,7 +64,7 @@ fn init_db(conn: &Connection) -> rusqlite::Result<()> {
 /// Save store to SQLite
 pub async fn save() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Run in blocking task since rusqlite is sync
-    tokio::task::spawn_blocking(|| save_sync()).await??;
+    tokio::task::spawn_blocking(save_sync).await??;
     Ok(())
 }
 
@@ -198,7 +198,7 @@ pub fn incr_site(site_hash: &str, user_identity: &str) -> (u64, u64) {
     let visitors = STORE
         .site_visitors
         .entry(site_hash.to_string())
-        .or_insert_with(DashSet::new);
+        .or_default();
 
     let is_new = visitors.insert(vh);
 

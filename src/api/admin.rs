@@ -308,7 +308,7 @@ pub async fn import_handler(Json(data): Json<ImportData>) -> impl IntoResponse {
             STORE
                 .site_visitors
                 .entry(hash)
-                .or_insert_with(dashmap::DashSet::new);
+                .or_default();
 
             sites_imported += 1;
         }
@@ -359,7 +359,7 @@ pub async fn sync_handler(
     Query(params): Query<SitemapSyncParams>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let sitemap_url = params.sitemap_url;
-    let concurrency = params.concurrency.unwrap_or(3).min(10).max(1);
+    let concurrency = params.concurrency.unwrap_or(3).clamp(1, 10);
 
     let stream = async_stream::stream! {
         yield Ok(Event::default().event("progress").data(
@@ -494,7 +494,7 @@ pub async fn sync_handler(
                             .store(site_uv, Ordering::Relaxed);
                     }
 
-                    STORE.site_visitors.entry(keys.site_hash.clone()).or_insert_with(dashmap::DashSet::new);
+                    STORE.site_visitors.entry(keys.site_hash.clone()).or_default();
                     STORE.site_hosts.entry(keys.site_hash).or_insert_with(|| host.clone());
                     STORE.page_paths.entry(keys.page_key.clone()).or_insert_with(|| path.clone());
 
