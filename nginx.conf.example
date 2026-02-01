@@ -1,0 +1,107 @@
+# Nginx 1.29+ 配置示例 (HTTP/3 + HTTP/2 + HSTS + SSL)
+# 请根据实际情况修改 server_name 和证书路径
+
+upstream busuanzi {
+    server 127.0.0.1:8080;
+    keepalive 32;
+}
+
+# HTTP -> HTTPS 重定向
+server {
+    listen 80;
+    listen [::]:80;
+    server_name bsz.example.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS + HTTP/2 + HTTP/3
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    listen 443 quic reuseport;
+    listen [::]:443 quic reuseport;
+    http2 on;
+
+    server_name bsz.example.com;
+
+    # SSL 证书
+    ssl_certificate /etc/ssl/certs/bsz.example.com.pem;
+    ssl_certificate_key /etc/ssl/private/bsz.example.com.key;
+
+    # SSL 配置
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    # HSTS (2 年)
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # HTTP/3 Alt-Svc 头
+    add_header Alt-Svc 'h3=":443"; ma=86400' always;
+
+    # 安全头
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # QUIC 传输参数
+    quic_retry on;
+    ssl_early_data on;
+
+    # 日志
+    access_log /var/log/nginx/bsz.access.log;
+    error_log /var/log/nginx/bsz.error.log;
+
+    # API 代理
+    location / {
+        proxy_pass http://busuanzi;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+
+        # CORS (可选，busuanzi 已内置 CORS)
+        # add_header Access-Control-Allow-Origin "*" always;
+
+        # 缓存控制
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+    }
+
+    # SSE 长连接 (同步功能)
+    location /api/admin/sync {
+        proxy_pass http://busuanzi;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Connection "";
+
+        # SSE 需要禁用缓冲
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+    }
+
+    # 健康检查
+    location /ping {
+        proxy_pass http://busuanzi;
+        proxy_http_version 1.1;
+        access_log off;
+    }
+}

@@ -100,6 +100,16 @@ cargo run              # 开发运行
 cargo build --release  # 构建发布版本
 ```
 
+## Nginx 反向代理
+
+参考 `nginx.conf.example` 配置 HTTP/3 + HTTP/2 + HSTS + SSL：
+
+```bash
+cp nginx.conf.example /etc/nginx/sites-available/bsz.conf
+# 修改 server_name 和证书路径
+nginx -t && nginx -s reload
+```
+
 ## 目录结构
 
 ```
@@ -112,6 +122,7 @@ cargo build --release  # 构建发布版本
 ├── static/            # 嵌入的静态文件
 ├── Dockerfile
 ├── compose.yml
+├── nginx.conf.example # Nginx 配置示例
 └── data.db            # SQLite 数据库 (运行时生成)
 ```
 

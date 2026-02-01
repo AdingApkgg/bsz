@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Busuanzi Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busuanzi Admin</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; --muted: #71717a; --accent: #3b82f6; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; }
@@ -117,20 +117,20 @@
       <div class="stat">
         <div class="stat-value" id="stat-sites">-</div>
         <div class="stat-label">站点</div>
-      </div>
+                </div>
       <div class="stat">
         <div class="stat-value" id="stat-pages">-</div>
         <div class="stat-label">页面</div>
-      </div>
+                </div>
       <div class="stat">
         <div class="stat-value" id="stat-pv">-</div>
-        <div class="stat-label">总 PV</div>
-      </div>
+                    <div class="stat-label">总 PV</div>
+                </div>
       <div class="stat">
         <div class="stat-value" id="stat-uv">-</div>
-        <div class="stat-label">总 UV</div>
-      </div>
-    </div>
+                    <div class="stat-label">总 UV</div>
+                </div>
+            </div>
 
     <div class="toolbar">
       <input type="text" class="search" id="search" placeholder="搜索站点 Hash..." oninput="filterKeys()">
@@ -143,74 +143,74 @@
           <option value="hash-asc">Hash A-Z</option>
         </select>
       </div>
-    </div>
-
+            </div>
+            
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
+                <thead>
+                    <tr>
             <th style="width:40%">站点</th>
             <th>PV</th>
             <th>UV</th>
             <th>页面</th>
             <th style="width:100px">操作</th>
-          </tr>
-        </thead>
-        <tbody id="keys-body">
+                    </tr>
+                </thead>
+                <tbody id="keys-body">
           <tr><td colspan="5" class="empty">加载中...</td></tr>
-        </tbody>
-      </table>
+                </tbody>
+            </table>
       <div class="status-bar">
         <span id="status-count">-</span>
         <span id="status-time">-</span>
       </div>
     </div>
-  </div>
+            </div>
 
   <div id="edit-modal" class="modal" onclick="if(event.target===this)closeModal('edit-modal')">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>编辑站点数据</h3>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>编辑站点数据</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>站点 Hash</label>
-          <input type="text" id="edit-hash" readonly>
-        </div>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>站点 Hash</label>
+                        <input type="text" id="edit-hash" readonly>
+                    </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Site PV</label>
+                    <div class="form-group">
+                        <label>Site PV</label>
             <input type="number" id="edit-pv" min="0">
-          </div>
-          <div class="form-group">
-            <label>Site UV</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Site UV</label>
             <input type="number" id="edit-uv" min="0">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('edit-modal')">取消</button>
-        <button class="btn btn-primary" onclick="saveEdit()">保存</button>
-      </div>
-    </div>
-  </div>
+                    <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+                </div>
+            </div>
+        </div>
 
   <div id="delete-modal" class="modal" onclick="if(event.target===this)closeModal('delete-modal')">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3>确认删除</h3>
+                <div class="modal-header">
+                    <h3>确认删除</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('delete-modal')">✕</button>
-      </div>
-      <div class="modal-body">
+                </div>
+                <div class="modal-body">
         <p>确定删除 <code id="delete-hash" style="color:var(--accent)"></code> 的所有数据？</p>
         <p style="color:var(--danger);margin-top:0.75rem;font-size:0.875rem">⚠ 此操作不可恢复！</p>
-      </div>
-      <div class="modal-footer">
+                </div>
+                <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('delete-modal')">取消</button>
-        <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
-      </div>
-    </div>
+                    <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+                </div>
+            </div>
   </div>
 
   <div id="pages-modal" class="modal" onclick="if(event.target===this)closeModal('pages-modal')">
@@ -314,7 +314,7 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('sync-modal')">取消</button>
         <button class="btn btn-primary" id="sync-btn" onclick="doSync()">开始同步</button>
-      </div>
+        </div>
     </div>
   </div>
 
