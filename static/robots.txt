@@ -5,7 +5,7 @@ Disallow: /admin
 Disallow: /api/admin
 
 # Sitemap
-Sitemap: https://bsz.saop.cc/sitemap.xml
+Sitemap: https://{{HOST}}/sitemap.xml
 
 # AI Crawlers
 User-agent: GPTBot

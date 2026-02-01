@@ -12,7 +12,7 @@ Busuanzi 是一个简洁的网站访客统计服务，使用 Rust 实现，零�
 
 ### 统计并获取数据 (POST /api)
 ```javascript
-const res = await fetch('https://bsz.saop.cc/api', {
+const res = await fetch('https://{{HOST}}/api', {
   method: 'POST',
   credentials: 'include',
   headers: { 'x-bsz-referer': location.href }
@@ -23,7 +23,7 @@ const { data } = await res.json();
 
 ### 仅获取数据 (GET /api)
 ```javascript
-const res = await fetch('https://bsz.saop.cc/api', {
+const res = await fetch('https://{{HOST}}/api', {
   credentials: 'include',
   headers: { 'x-bsz-referer': location.href }
 });
@@ -31,7 +31,7 @@ const res = await fetch('https://bsz.saop.cc/api', {
 
 ### 仅提交统计 (PUT /api)
 ```javascript
-await fetch('https://bsz.saop.cc/api', {
+await fetch('https://{{HOST}}/api', {
   method: 'PUT',
   credentials: 'include',
   headers: { 'x-bsz-referer': location.href }

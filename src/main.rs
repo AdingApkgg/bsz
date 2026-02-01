@@ -60,6 +60,8 @@ async fn main() {
         .route("/keys", get(api::admin::list_keys_handler))
         .route("/keys", delete(api::admin::delete_key_handler))
         .route("/keys/update", post(api::admin::update_key_handler))
+        .route("/keys/rename", post(api::admin::rename_key_handler))
+        .route("/keys/merge", post(api::admin::merge_key_handler))
         .route("/pages", get(api::admin::list_pages_handler))
         .route("/pages/update", post(api::admin::update_page_handler))
         .route("/stats", get(api::admin::stats_handler))
@@ -85,6 +87,7 @@ async fn main() {
         .route("/admin", get(static_files::serve_admin))
         .route("/robots.txt", get(static_files::serve_robots))
         .route("/llms.txt", get(static_files::serve_llms))
+        .route("/sitemap.xml", get(static_files::serve_sitemap))
         .route("/static/*path", get(static_files::serve_static))
         // Middleware
         .layer(axum_middleware::from_fn(

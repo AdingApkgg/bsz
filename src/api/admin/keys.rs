@@ -157,3 +157,170 @@ pub async fn update_key_handler(Json(params): Json<UpdateKeyParams>) -> impl Int
         "message": "updated"
     }))
 }
+
+#[derive(Debug, Deserialize)]
+pub struct RenameKeyParams {
+    pub old_key: String,
+    pub new_key: String,
+}
+
+/// POST /api/admin/keys/rename - Rename a site (change domain)
+pub async fn rename_key_handler(Json(params): Json<RenameKeyParams>) -> impl IntoResponse {
+    let old_key = &params.old_key;
+    let new_key = &params.new_key;
+
+    if old_key == new_key {
+        return Json(json!({
+            "success": false,
+            "message": "新旧域名相同"
+        }));
+    }
+
+    // Check if old site exists
+    if !STORE.site_pv.contains_key(old_key) {
+        return Json(json!({
+            "success": false,
+            "message": "源站点不存在"
+        }));
+    }
+
+    // Check if new site already exists
+    if STORE.site_pv.contains_key(new_key) {
+        return Json(json!({
+            "success": false,
+            "message": "目标站点已存在，请使用合并功能"
+        }));
+    }
+
+    // Move site stats
+    if let Some((_, pv)) = STORE.site_pv.remove(old_key) {
+        STORE.site_pv.insert(new_key.clone(), pv);
+    }
+    if let Some((_, uv)) = STORE.site_uv.remove(old_key) {
+        STORE.site_uv.insert(new_key.clone(), uv);
+    }
+    if let Some((_, visitors)) = STORE.site_visitors.remove(old_key) {
+        STORE.site_visitors.insert(new_key.clone(), visitors);
+    }
+
+    // Move page stats (rename keys)
+    let old_prefix = format!("{}:", old_key);
+    let pages_to_move: Vec<_> = STORE
+        .page_pv
+        .iter()
+        .filter(|e| e.key().starts_with(&old_prefix))
+        .map(|e| (e.key().clone(), e.value().load(Ordering::Relaxed)))
+        .collect();
+
+    for (old_page_key, pv) in pages_to_move {
+        STORE.page_pv.remove(&old_page_key);
+        let path = old_page_key.strip_prefix(&old_prefix).unwrap_or("");
+        let new_page_key = format!("{}:{}", new_key, path);
+        STORE.page_pv.insert(new_page_key, AtomicU64::new(pv));
+    }
+
+    Json(json!({
+        "success": true,
+        "message": format!("已将 {} 重命名为 {}", old_key, new_key)
+    }))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MergeKeyParams {
+    pub source_key: String,
+    pub target_key: String,
+}
+
+/// POST /api/admin/keys/merge - Merge source site into target site
+pub async fn merge_key_handler(Json(params): Json<MergeKeyParams>) -> impl IntoResponse {
+    let source = &params.source_key;
+    let target = &params.target_key;
+
+    if source == target {
+        return Json(json!({
+            "success": false,
+            "message": "源和目标站点相同"
+        }));
+    }
+
+    // Check if source exists
+    if !STORE.site_pv.contains_key(source) {
+        return Json(json!({
+            "success": false,
+            "message": "源站点不存在"
+        }));
+    }
+
+    // Merge site PV (add)
+    let source_pv = STORE
+        .site_pv
+        .get(source)
+        .map(|v| v.load(Ordering::Relaxed))
+        .unwrap_or(0);
+    STORE
+        .site_pv
+        .entry(target.to_string())
+        .or_insert_with(|| AtomicU64::new(0))
+        .fetch_add(source_pv, Ordering::Relaxed);
+
+    // Merge site UV (use max, since visitors may overlap)
+    let source_uv = STORE
+        .site_uv
+        .get(source)
+        .map(|v| v.load(Ordering::Relaxed))
+        .unwrap_or(0);
+    let target_uv = STORE
+        .site_uv
+        .entry(target.to_string())
+        .or_insert_with(|| AtomicU64::new(0));
+    let current_uv = target_uv.load(Ordering::Relaxed);
+    if source_uv > current_uv {
+        target_uv.store(source_uv, Ordering::Relaxed);
+    }
+
+    // Merge visitors
+    if let Some(source_visitors) = STORE.site_visitors.get(source) {
+        let target_visitors = STORE.site_visitors.entry(target.to_string()).or_default();
+        for vh in source_visitors.iter() {
+            target_visitors.insert(*vh);
+        }
+    }
+
+    // Merge page stats
+    let source_prefix = format!("{}:", source);
+    let target_prefix = format!("{}:", target);
+    let pages_to_merge: Vec<_> = STORE
+        .page_pv
+        .iter()
+        .filter(|e| e.key().starts_with(&source_prefix))
+        .map(|e| (e.key().clone(), e.value().load(Ordering::Relaxed)))
+        .collect();
+
+    let mut pages_merged = 0;
+    for (source_page_key, source_page_pv) in pages_to_merge {
+        let path = source_page_key.strip_prefix(&source_prefix).unwrap_or("");
+        let target_page_key = format!("{}{}", target_prefix, path);
+
+        // Add to existing or create new
+        STORE
+            .page_pv
+            .entry(target_page_key)
+            .or_insert_with(|| AtomicU64::new(0))
+            .fetch_add(source_page_pv, Ordering::Relaxed);
+
+        pages_merged += 1;
+    }
+
+    // Delete source site
+    STORE.site_pv.remove(source);
+    STORE.site_uv.remove(source);
+    STORE.site_visitors.remove(source);
+    STORE
+        .page_pv
+        .retain(|k, _| !k.starts_with(&source_prefix));
+
+    Json(json!({
+        "success": true,
+        "message": format!("已将 {} 合并到 {}，共迁移 {} 个页面", source, target, pages_merged)
+    }))
+}

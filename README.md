@@ -70,6 +70,7 @@ cp .env.example .env
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `PORT` | 监听端口 | `8080` |
+| `DOMAIN` | 对外域名 | `localhost:PORT` |
 | `ADMIN_TOKEN` | 管理密码 | _(空则禁用)_ |
 | `SAVE_INTERVAL` | 保存间隔(秒) | `30` |
 

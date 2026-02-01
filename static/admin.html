@@ -20,7 +20,8 @@
     .auth input:focus { outline: none; border-color: var(--accent); }
     
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
     .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
     .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -43,8 +44,29 @@
     .hash { font-family: ui-monospace, monospace; font-size: 0.8rem; color: var(--muted); cursor: pointer; }
     .hash:hover { color: var(--text); }
     .num { font-variant-numeric: tabular-nums; }
-    .actions { display: flex; gap: 0.25rem; }
+    .actions { display: flex; gap: 0.25rem; flex-wrap: wrap; }
     .empty { text-align: center; padding: 3rem; color: var(--muted); }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 600px; }
+      th, td { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+      .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+      .header h1 { font-size: 1.1rem; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .search { min-width: auto; }
+      .toolbar-right { justify-content: space-between; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 1rem 0.75rem; }
+      .stat { padding: 0.75rem; }
+      .stat-value { font-size: 1.25rem; }
+      .modal-content { width: 95%; margin: 0.5rem; }
+      .modal-body { padding: 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .toast { left: 1rem; right: 1rem; bottom: 1rem; }
+    }
     
     .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.375rem; }
     .btn:hover { opacity: 0.85; }
@@ -142,11 +164,11 @@
       <table>
                 <thead>
                     <tr>
-            <th style="width:40%">域名</th>
+            <th style="width:30%">域名</th>
             <th>PV</th>
             <th>UV</th>
             <th>页面</th>
-            <th style="width:100px">操作</th>
+            <th style="width:200px">操作</th>
                     </tr>
                 </thead>
                 <tbody id="keys-body">
@@ -188,6 +210,55 @@
                 </div>
             </div>
         </div>
+
+  <div id="rename-modal" class="modal" onclick="if(event.target===this)closeModal('rename-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>重命名站点</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('rename-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>原域名</label>
+          <input type="text" id="rename-old" readonly>
+        </div>
+        <div class="form-group">
+          <label>新域名</label>
+          <input type="text" id="rename-new" placeholder="example.com">
+        </div>
+        <p class="help">用于网站更换域名后保留统计数据</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('rename-modal')">取消</button>
+        <button class="btn btn-primary" onclick="confirmRename()">重命名</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="merge-modal" class="modal" onclick="if(event.target===this)closeModal('merge-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>合并站点数据</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('merge-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>源站点（将被删除）</label>
+          <input type="text" id="merge-source" readonly>
+        </div>
+        <div class="form-group">
+          <label>目标站点（保留）</label>
+          <input type="text" id="merge-target" placeholder="example.com">
+        </div>
+        <p class="help">将源站点的 PV 累加到目标站点，UV 取较大值，页面数据合并</p>
+        <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 合并后源站点将被删除！</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('merge-modal')">取消</button>
+        <button class="btn btn-warning" onclick="confirmMerge()">合并</button>
+      </div>
+    </div>
+  </div>
 
   <div id="delete-modal" class="modal modal-top" onclick="if(event.target===this)closeModal('delete-modal')">
     <div class="modal-content">
@@ -420,6 +491,8 @@
           <td class="num"><a href="#" onclick="openPages('${safeKey}');return false" style="color:var(--accent)">${fmt(k.page_count)}</a></td>
           <td class="actions">
             <button class="btn btn-ghost btn-sm" onclick="openEdit('${safeKey}', ${k.site_pv || 0}, ${k.site_uv || 0})">编辑</button>
+            <button class="btn btn-ghost btn-sm" onclick="openRename('${safeKey}')">重命名</button>
+            <button class="btn btn-ghost btn-sm" onclick="openMerge('${safeKey}')">合并</button>
             <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openDelete('${safeKey}')">删除</button>
           </td>
         </tr>
@@ -468,6 +541,62 @@
       currentSiteKey = siteKey;
       $('delete-key').textContent = siteKey;
       $('delete-modal').classList.add('show');
+    }
+
+    function openRename(siteKey) {
+      currentSiteKey = siteKey;
+      $('rename-old').value = siteKey;
+      $('rename-new').value = '';
+      $('rename-modal').classList.add('show');
+      $('rename-new').focus();
+    }
+
+    async function confirmRename() {
+      const newKey = $('rename-new').value.trim();
+      if (!newKey) return toast('请输入新域名', 'error');
+      
+      try {
+        const res = await fetch(API + '/keys/rename', {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify({ old_key: currentSiteKey, new_key: newKey })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+        toast(result.message);
+        closeModal('rename-modal');
+        init();
+      } catch (e) {
+        toast(e.message || '重命名失败', 'error');
+      }
+    }
+
+    function openMerge(siteKey) {
+      currentSiteKey = siteKey;
+      $('merge-source').value = siteKey;
+      $('merge-target').value = '';
+      $('merge-modal').classList.add('show');
+      $('merge-target').focus();
+    }
+
+    async function confirmMerge() {
+      const targetKey = $('merge-target').value.trim();
+      if (!targetKey) return toast('请输入目标站点', 'error');
+      
+      try {
+        const res = await fetch(API + '/keys/merge', {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify({ source_key: currentSiteKey, target_key: targetKey })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+        toast(result.message);
+        closeModal('merge-modal');
+        init();
+      } catch (e) {
+        toast(e.message || '合并失败', 'error');
+      }
     }
 
     async function confirmDelete() {
@@ -734,6 +863,8 @@
       if (e.key === 'Escape') {
         closeModal('edit-modal');
         closeModal('delete-modal');
+        closeModal('rename-modal');
+        closeModal('merge-modal');
         closeModal('import-modal');
         closeModal('pages-modal');
         closeModal('edit-page-modal');

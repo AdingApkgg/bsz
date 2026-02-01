@@ -10,13 +10,13 @@
   <meta name="keywords" content="busuanzi,不蒜子,网站统计,访客计数器,PV,UV,page view,visitor counter,Rust">
   <meta name="author" content="AdingApkgg">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://bsz.saop.cc/">
+  <link rel="canonical" href="https://{{HOST}}/">
   
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="不蒜子 - 极简网页计数器">
   <meta property="og:description" content="简洁的网站访客统计服务，零依赖、高性能。支持 site_pv、site_uv、page_pv 统计。">
-  <meta property="og:url" content="https://bsz.saop.cc/">
+  <meta property="og:url" content="https://{{HOST}}/">
   <meta property="og:site_name" content="Busuanzi">
   <meta property="og:locale" content="zh_CN">
   
@@ -32,7 +32,7 @@
     "@type": "WebApplication",
     "name": "不蒜子 Busuanzi",
     "description": "简洁的网站访客统计服务，零依赖、高性能",
-    "url": "https://bsz.saop.cc/",
+    "url": "https://{{HOST}}/",
     "applicationCategory": "WebApplication",
     "operatingSystem": "Any",
     "offers": {
@@ -74,10 +74,27 @@
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
     .stat-value { font-size: 2rem; font-weight: 600; color: var(--accent); }
     .stat-label { font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem; }
-    @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
     .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0; }
     .feature { padding: 0.75rem; background: rgba(59,130,246,0.1); border-radius: 8px; font-size: 0.875rem; }
-    @media (max-width: 480px) { .features { grid-template-columns: 1fr; } }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .container { padding: 2rem 1rem; }
+      h1 { font-size: 1.5rem; }
+      .card { padding: 1rem; }
+      pre { font-size: 0.75rem; padding: 0.75rem; }
+      table { font-size: 0.875rem; }
+      th, td { padding: 0.5rem; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem 0.75rem; }
+      .stats { grid-template-columns: 1fr; }
+      .stat-value { font-size: 1.5rem; }
+      .features { grid-template-columns: 1fr; }
+      h1 { font-size: 1.25rem; }
+      h2 { font-size: 1rem; }
+      .card { border-radius: 8px; margin-bottom: 1rem; }
+    }
   </style>
 </head>
 <body>
@@ -157,7 +174,7 @@
     <section class="card">
       <h2>快速开始</h2>
 <pre><code><span class="c">// 统计当前页面并获取数据</span>
-<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://bsz.saop.cc/api'</span>, {
+<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://{{HOST}}/api'</span>, {
   method: <span class="s">'POST'</span>,
   credentials: <span class="s">'include'</span>,  <span class="c">// 携带 Cookie</span>
   headers: { <span class="s">'x-bsz-referer'</span>: location.href }
@@ -174,7 +191,7 @@ console.log(<span class="s">'PV:'</span>, data.site_pv, <span class="s">'UV:'</s
 
 &lt;script&gt;
 (<span class="k">async</span> () =&gt; {
-  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://bsz.saop.cc/api'</span>, {
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://{{HOST}}/api'</span>, {
     method: <span class="s">'POST'</span>,
     credentials: <span class="s">'include'</span>,
     headers: { <span class="s">'x-bsz-referer'</span>: location.href }
