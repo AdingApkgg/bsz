@@ -103,10 +103,7 @@ async fn main() {
     let addr: SocketAddr = CONFIG.web_addr.parse().expect("Invalid address");
     tracing::info!("Busuanzi listening on {}", addr);
     tracing::info!("Admin panel: http://{}/admin", addr);
-    tracing::info!(
-        "Admin API protected: {}",
-        !CONFIG.admin_token.is_empty()
-    );
+    tracing::info!("Admin API protected: {}", !CONFIG.admin_token.is_empty());
     tracing::info!("Data saves every {}s", CONFIG.save_interval);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

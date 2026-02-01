@@ -117,7 +117,7 @@ pub async fn delete_key_handler(Query(params): Query<DeleteKeyParams>) -> impl I
     if let Some(page_key) = &params.page_key {
         STORE.page_pv.remove(page_key);
         STORE.page_paths.remove(page_key);
-        
+
         return Json(json!({
             "success": true,
             "message": "page deleted"
@@ -167,7 +167,7 @@ pub async fn list_pages_handler(Query(params): Query<ListPagesParams>) -> impl I
             let pv = entry.value().load(Ordering::Relaxed);
             let page_hash = key.strip_prefix(&prefix).unwrap_or(key).to_string();
             let path = STORE.page_paths.get(key).map(|v| v.clone());
-            
+
             pages.push(PageInfo {
                 page_key: key.clone(),
                 page_hash,
@@ -305,10 +305,7 @@ pub async fn import_handler(Json(data): Json<ImportData>) -> impl IntoResponse {
             }
 
             // Ensure visitors set exists
-            STORE
-                .site_visitors
-                .entry(hash)
-                .or_default();
+            STORE.site_visitors.entry(hash).or_default();
 
             sites_imported += 1;
         }
@@ -583,7 +580,7 @@ async fn fetch_busuanzi_stats(
     page_url: &str,
 ) -> Result<(u64, u64, u64), String> {
     const MAX_RETRIES: u32 = 3;
-    
+
     for attempt in 0..MAX_RETRIES {
         match fetch_busuanzi_stats_once(client, page_url).await {
             Ok(result) => return Ok(result),
@@ -596,7 +593,7 @@ async fn fetch_busuanzi_stats(
             Err(e) => return Err(e),
         }
     }
-    
+
     Err("Max retries exceeded".to_string())
 }
 
@@ -616,7 +613,10 @@ async fn fetch_busuanzi_stats_once(
     let res = client
         .get(&api_url)
         .header("Referer", page_url)
-        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        )
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -627,7 +627,7 @@ async fn fetch_busuanzi_stats_once(
     }
 
     let text = res.text().await.map_err(|e| e.to_string())?;
-    
+
     // Check if response looks like HTML error page
     if text.contains("<!DOCTYPE") || text.contains("<html") {
         return Err("Rate limited (HTML response)".to_string());
@@ -636,20 +636,23 @@ async fn fetch_busuanzi_stats_once(
     // Parse JSONP: try{cb({"site_uv":123,"page_pv":456,...});}catch(e){}
     let start = text.find("cb(").map(|i| i + 3);
     let end = text.find(");");
-    
+
     let json_str = match (start, end) {
         (Some(s), Some(e)) if s < e => Some(&text[s..e]),
         _ => None,
     };
 
     let json_str = json_str.ok_or_else(|| {
-        let preview = if text.len() > 200 { &text[..200] } else { &text };
+        let preview = if text.len() > 200 {
+            &text[..200]
+        } else {
+            &text
+        };
         format!("Invalid JSONP: {}", preview)
     })?;
 
-    let data: serde_json::Value = serde_json::from_str(json_str).map_err(|e| {
-        format!("JSON parse error: {} for: {}", e, json_str)
-    })?;
+    let data: serde_json::Value = serde_json::from_str(json_str)
+        .map_err(|e| format!("JSON parse error: {} for: {}", e, json_str))?;
 
     Ok((
         data["site_pv"].as_u64().unwrap_or(0),

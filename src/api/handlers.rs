@@ -1,5 +1,6 @@
 //! API handlers
 
+use crate::core::count;
 use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
@@ -7,7 +8,6 @@ use axum::{
 };
 use serde_json::json;
 use url::Url;
-use crate::core::count;
 
 fn default_data() -> serde_json::Value {
     json!({

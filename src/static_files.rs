@@ -12,7 +12,9 @@ use rust_embed::RustEmbed;
 struct Assets;
 
 fn mime_type(path: &str) -> &'static str {
-    mime_guess::from_path(path).first_raw().unwrap_or("application/octet-stream")
+    mime_guess::from_path(path)
+        .first_raw()
+        .unwrap_or("application/octet-stream")
 }
 
 fn serve(path: &str) -> Response {

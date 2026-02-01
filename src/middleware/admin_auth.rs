@@ -1,15 +1,12 @@
+use crate::config::CONFIG;
 use axum::{
     body::Body,
     http::{Request, Response, StatusCode},
     middleware::Next,
     response::IntoResponse,
 };
-use crate::config::CONFIG;
 
-pub async fn admin_auth_middleware(
-    req: Request<Body>,
-    next: Next,
-) -> Response<Body> {
+pub async fn admin_auth_middleware(req: Request<Body>, next: Next) -> Response<Body> {
     // If ADMIN_TOKEN is not set, allow access (for development)
     if CONFIG.admin_token.is_empty() {
         tracing::warn!("ADMIN_TOKEN is not set! Admin API is unprotected.");
@@ -17,7 +14,8 @@ pub async fn admin_auth_middleware(
     }
 
     // Check Authorization header: Bearer <token>
-    let auth_header = req.headers()
+    let auth_header = req
+        .headers()
         .get("Authorization")
         .and_then(|h| h.to_str().ok());
 

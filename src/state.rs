@@ -138,8 +138,12 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
 
         for row in rows {
             let (hash, pv, uv, host) = row?;
-            STORE.site_pv.insert(hash.clone(), AtomicU64::new(pv as u64));
-            STORE.site_uv.insert(hash.clone(), AtomicU64::new(uv as u64));
+            STORE
+                .site_pv
+                .insert(hash.clone(), AtomicU64::new(pv as u64));
+            STORE
+                .site_uv
+                .insert(hash.clone(), AtomicU64::new(uv as u64));
             STORE.site_visitors.insert(hash.clone(), DashSet::new());
             if let Some(h) = host {
                 STORE.site_hosts.insert(hash, h);
