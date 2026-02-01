@@ -7,7 +7,7 @@ repository = "https://github.com/AdingApkgg/bsz"
 license = "MIT"
 
 [dependencies]
-axum = "0.7"
+axum = { version = "0.7", features = ["multipart"] }
 tokio = { version = "1.0", features = ["full", "fs", "signal"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -31,6 +31,7 @@ futures = "0.3"
 tokio-stream = "0.1"
 async-stream = "0.3"
 urlencoding = "2.1"
+chrono = "0.4"
 
 [profile.release]
 lto = true

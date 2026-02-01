@@ -260,21 +260,18 @@
   </div>
 
   <div id="import-modal" class="modal" onclick="if(event.target===this)closeModal('import-modal')">
-    <div class="modal-content" style="max-width:560px">
+    <div class="modal-content">
       <div class="modal-header">
-        <h3>导入数据</h3>
+        <h3>导入数据库</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('import-modal')">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>选择 JSON 文件</label>
-          <input type="file" id="import-file" accept=".json" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
+          <label>选择 data.db 文件</label>
+          <input type="file" id="import-file" accept=".db" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
         </div>
-        <div class="form-group">
-          <label>或粘贴 JSON</label>
-          <textarea id="import-json" rows="8" placeholder='{"sites":{"hash":{"pv":100,"uv":10}},"pages":{"hash:pagehash":{"pv":50}}}' style="width:100%;padding:0.625rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:monospace;font-size:0.8rem;resize:vertical"></textarea>
-        </div>
-        <p class="help">支持格式: <code>{"sites":{"hash":{"pv":N,"uv":N}},"pages":{"site:page":{"pv":N}}}</code></p>
+        <p class="help">上传从导出功能下载的 SQLite 数据库文件 (.db)</p>
+        <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 导入将覆盖现有数据！</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('import-modal')">取消</button>
@@ -578,18 +575,11 @@
     }
 
     function exportData() {
-      const data = {
-        exported_at: new Date().toISOString(),
-        sites: allKeys
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `busuanzi-export-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast('已导出');
+      // Download data.db directly
+      const link = document.createElement('a');
+      link.href = API + '/export?token=' + encodeURIComponent(token);
+      link.click();
+      toast('开始下载 data.db');
     }
 
     function toggleAutoRefresh() {
@@ -605,56 +595,23 @@
 
     function openImport() {
       $('import-file').value = '';
-      $('import-json').value = '';
       $('import-modal').classList.add('show');
     }
 
     async function doImport() {
-      let data;
       const file = $('import-file').files[0];
-      const json = $('import-json').value.trim();
-
-      try {
-        if (file) {
-          const text = await file.text();
-          data = JSON.parse(text);
-        } else if (json) {
-          data = JSON.parse(json);
-        } else {
-          return toast('请选择文件或粘贴 JSON', 'error');
-        }
-      } catch (e) {
-        return toast('JSON 解析失败: ' + e.message, 'error');
+      if (!file) {
+        return toast('请选择 data.db 文件', 'error');
       }
 
-      // Normalize data format
-      const importData = { sites: {}, pages: {} };
-      
-      if (data.sites) {
-        for (const [key, val] of Object.entries(data.sites)) {
-          if (typeof val === 'object') {
-            importData.sites[key] = { pv: val.pv || val.site_pv || 0, uv: val.uv || val.site_uv };
-          } else {
-            importData.sites[key] = { pv: val, uv: 0 };
-          }
-        }
-      }
-      
-      if (data.pages) {
-        for (const [key, val] of Object.entries(data.pages)) {
-          if (typeof val === 'object') {
-            importData.pages[key] = { pv: val.pv || val.page_pv || 0 };
-          } else {
-            importData.pages[key] = { pv: val };
-          }
-        }
-      }
+      const formData = new FormData();
+      formData.append('file', file);
 
       try {
         const res = await fetch(API + '/import', {
           method: 'POST',
-          headers: headers(),
-          body: JSON.stringify(importData)
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData
         });
         const result = await res.json();
         if (!result.success) throw new Error(result.message);

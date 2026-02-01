@@ -102,7 +102,27 @@ fetch('https://your-domain.com/api', {
 3. 输入你的 sitemap.xml 地址
 4. 等待自动从 busuanzi.ibruce.info 拉取数据
 
-## Nginx 反向代理
+## 部署
+
+### systemd 服务
+
+```bash
+# 复制程序
+sudo mkdir -p /opt/bsz
+sudo cp target/release/busuanzi-rs /opt/bsz/
+sudo cp .env /opt/bsz/
+
+# 安装服务
+sudo cp bsz.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now bsz
+
+# 查看状态
+sudo systemctl status bsz
+sudo journalctl -u bsz -f
+```
+
+### Nginx 反向代理
 
 参考 `nginx.conf.example` 配置 HTTP/3 + HTTP/2 + HSTS + SSL。
 
@@ -116,6 +136,7 @@ fetch('https://your-domain.com/api', {
 │   ├── middleware/    # 中间件
 │   └── main.rs        # 入口
 ├── static/            # 嵌入的静态文件
+├── bsz.service        # systemd 服务配置
 ├── nginx.conf.example # Nginx 配置示例
 └── data.db            # SQLite 数据库 (运行时生成)
 ```

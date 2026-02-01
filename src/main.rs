@@ -74,6 +74,7 @@ async fn main() {
         .route("/pages", get(api::admin::list_pages_handler))
         .route("/pages/update", post(api::admin::update_page_handler))
         .route("/stats", get(api::admin::stats_handler))
+        .route("/export", get(api::admin::export_handler))
         .route("/import", post(api::admin::import_handler))
         .route("/sync", get(api::admin::sync_handler))
         .layer(axum_middleware::from_fn(
