@@ -76,6 +76,21 @@ cp .env.example .env
 | `ADMIN_TOKEN` | 管理密码 | _(空则禁用)_ |
 | `SAVE_INTERVAL` | 保存间隔(秒) | `30` |
 
+## 自定义页面
+
+在运行目录创建 `static/` 文件夹，放入同名文件即可覆盖默认页面：
+
+```
+./static/
+├── index.html      # 自定义首页
+├── admin.html      # 自定义管理面板
+├── robots.txt      # 自定义 robots
+├── llms.txt        # 自定义 AI 说明
+└── sitemap.xml     # 自定义站点地图
+```
+
+支持 `{{HOST}}` 占位符，会被替换为配置的 `DOMAIN` 值。
+
 ## API
 
 | 方法 | 路径 | 说明 |
