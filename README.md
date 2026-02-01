@@ -1,5 +1,8 @@
 # Busuanzi (不蒜子)
 
+[![Release](https://img.shields.io/github/v/release/AdingApkgg/bsz?style=flat-square)](https://github.com/AdingApkgg/bsz/releases)
+[![License](https://img.shields.io/github/license/AdingApkgg/bsz?style=flat-square)](LICENSE)
+
 简洁的网站访客统计服务。单一二进制，零外部依赖。
 
 ## 特性
@@ -11,7 +14,31 @@
 - **Sitemap 同步** - 从 busuanzi.ibruce.info 迁移数据
 - **兼容原版** - 支持 site_pv、site_uv、page_pv
 
-## 编译运行
+## 安装
+
+### 下载预编译版本
+
+从 [Releases](https://github.com/AdingApkgg/bsz/releases) 下载适合你平台的版本：
+
+| 平台 | 文件 |
+|------|------|
+| Linux x86_64 | `busuanzi-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux x86_64 (静态) | `busuanzi-x86_64-unknown-linux-musl.tar.gz` |
+| Linux ARM64 | `busuanzi-aarch64-unknown-linux-gnu.tar.gz` |
+| Linux ARM64 (静态) | `busuanzi-aarch64-unknown-linux-musl.tar.gz` |
+| Linux ARMv7 | `busuanzi-armv7-unknown-linux-gnueabihf.tar.gz` |
+| macOS Apple Silicon | `busuanzi-aarch64-apple-darwin.tar.gz` |
+| macOS Intel | `busuanzi-x86_64-apple-darwin.tar.gz` |
+| Windows x86_64 | `busuanzi-x86_64-pc-windows-msvc.zip` |
+| Windows ARM64 | `busuanzi-aarch64-pc-windows-msvc.zip` |
+
+```bash
+# Linux/macOS 示例
+tar xzf busuanzi-*.tar.gz
+./busuanzi-rs
+```
+
+### 从源码编译
 
 ```bash
 # 安装 Rust (如未安装)
