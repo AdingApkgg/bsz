@@ -88,7 +88,7 @@ async fn main() {
         .route("/robots.txt", get(static_files::serve_robots))
         .route("/llms.txt", get(static_files::serve_llms))
         .route("/sitemap.xml", get(static_files::serve_sitemap))
-        .route("/static/*path", get(static_files::serve_static))
+        .route("/static/{*path}", get(static_files::serve_static))
         // Middleware
         .layer(axum_middleware::from_fn(
             middleware::identity::identity_middleware,
