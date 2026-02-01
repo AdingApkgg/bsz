@@ -17,8 +17,8 @@
 # 直接运行
 ./busuanzi-rs
 
-# 或使用 Docker
-docker-compose up -d
+# 或使用 Podman/Docker
+podman-compose up -d
 ```
 
 访问：
@@ -110,7 +110,7 @@ cargo build --release  # 构建发布版本
 │   └── main.rs        # 入口
 ├── static/            # 嵌入的静态文件
 ├── Dockerfile
-├── docker-compose.yml
+├── compose.yml
 └── data.json          # 持久化数据 (运行时生成)
 ```
 

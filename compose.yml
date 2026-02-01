@@ -1,5 +1,5 @@
-# Busuanzi Docker/Podman Compose
-# Usage: podman-compose up -d
+# Busuanzi Compose (Podman/Docker)
+# Usage: podman-compose up -d  or  docker compose up -d
 
 services:
   busuanzi:
