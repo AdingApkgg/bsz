@@ -5,6 +5,9 @@
 .env
 
 # Data files
+data.db
+data.db-shm
+data.db-wal
 data.json
 data.bin
 

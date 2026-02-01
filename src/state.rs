@@ -1,26 +1,20 @@
-//! In-memory data store with background persistence (JSON format)
+//! In-memory data store with SQLite persistence
 
 use dashmap::{DashMap, DashSet};
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::Path;
+use rusqlite::{params, Connection};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Mutex;
 
-const DATA_FILE: &str = "data.json";
+const DB_FILE: &str = "data.db";
 
 /// Global data store
 /// Only 3 metrics: site_pv, site_uv, page_pv (matching original busuanzi)
 pub struct Store {
-    /// site_hash -> pv
     pub site_pv: DashMap<String, AtomicU64>,
-    /// site_hash -> uv
     pub site_uv: DashMap<String, AtomicU64>,
-    /// site_hash -> Set of visitor hashes (for UV dedup)
     pub site_visitors: DashMap<String, DashSet<u64>>,
-    /// page_key (site_hash:page_hash) -> pv
     pub page_pv: DashMap<String, AtomicU64>,
-    /// URL mappings for display
     pub site_hosts: DashMap<String, String>,
     pub page_paths: DashMap<String, String>,
 }
@@ -40,94 +34,136 @@ impl Store {
 
 pub static STORE: Lazy<Store> = Lazy::new(Store::new);
 
-// ==================== Serialization ====================
+// SQLite connection (single writer)
+static DB: Lazy<Mutex<Connection>> = Lazy::new(|| {
+    let conn = Connection::open(DB_FILE).expect("Failed to open database");
+    init_db(&conn).expect("Failed to initialize database");
+    Mutex::new(conn)
+});
 
-/// Site data for JSON storage
-#[derive(Serialize, Deserialize, Default)]
-struct SiteEntry {
-    pv: u64,
-    uv: u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    host: Option<String>,
+fn init_db(conn: &Connection) -> rusqlite::Result<()> {
+    conn.execute_batch(
+        "
+        CREATE TABLE IF NOT EXISTS sites (
+            hash TEXT PRIMARY KEY,
+            pv INTEGER NOT NULL DEFAULT 0,
+            uv INTEGER NOT NULL DEFAULT 0,
+            host TEXT
+        );
+        CREATE TABLE IF NOT EXISTS pages (
+            key TEXT PRIMARY KEY,
+            pv INTEGER NOT NULL DEFAULT 0,
+            path TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_pages_site ON pages(key);
+        ",
+    )?;
+    Ok(())
 }
 
-/// Page data for JSON storage  
-#[derive(Serialize, Deserialize, Default)]
-struct PageEntry {
-    pv: u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-struct PersistedData {
-    /// site_hash -> { pv, uv, host? }
-    sites: HashMap<String, SiteEntry>,
-    /// page_key -> { pv, path? }
-    pages: HashMap<String, PageEntry>,
-}
-
-/// Save store to JSON file
+/// Save store to SQLite
 pub async fn save() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let mut data = PersistedData::default();
+    // Run in blocking task since rusqlite is sync
+    tokio::task::spawn_blocking(|| save_sync()).await??;
+    Ok(())
+}
 
-    for entry in STORE.site_pv.iter() {
-        let hash = entry.key().clone();
-        let pv = entry.value().load(Ordering::Relaxed);
-        let uv = STORE
-            .site_uv
-            .get(&hash)
-            .map(|v| v.load(Ordering::Relaxed))
-            .unwrap_or(0);
-        let host = STORE.site_hosts.get(&hash).map(|v| v.clone());
+fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let conn = DB.lock().unwrap();
+    let tx = conn.unchecked_transaction()?;
 
-        data.sites.insert(hash, SiteEntry { pv, uv, host });
+    // Upsert sites
+    {
+        let mut stmt = tx.prepare_cached(
+            "INSERT INTO sites (hash, pv, uv, host) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(hash) DO UPDATE SET pv=?2, uv=?3, host=COALESCE(?4, host)",
+        )?;
+
+        for entry in STORE.site_pv.iter() {
+            let hash = entry.key();
+            let pv = entry.value().load(Ordering::Relaxed);
+            let uv = STORE
+                .site_uv
+                .get(hash)
+                .map(|v| v.load(Ordering::Relaxed))
+                .unwrap_or(0);
+            let host = STORE.site_hosts.get(hash).map(|v| v.clone());
+
+            stmt.execute(params![hash, pv as i64, uv as i64, host])?;
+        }
     }
 
-    for entry in STORE.page_pv.iter() {
-        let key = entry.key().clone();
-        let pv = entry.value().load(Ordering::Relaxed);
-        let path = STORE.page_paths.get(&key).map(|v| v.clone());
+    // Upsert pages
+    {
+        let mut stmt = tx.prepare_cached(
+            "INSERT INTO pages (key, pv, path) VALUES (?1, ?2, ?3)
+             ON CONFLICT(key) DO UPDATE SET pv=?2, path=COALESCE(?3, path)",
+        )?;
 
-        data.pages.insert(key, PageEntry { pv, path });
+        for entry in STORE.page_pv.iter() {
+            let key = entry.key();
+            let pv = entry.value().load(Ordering::Relaxed);
+            let path = STORE.page_paths.get(key).map(|v| v.clone());
+
+            stmt.execute(params![key, pv as i64, path])?;
+        }
     }
 
-    let json = serde_json::to_string_pretty(&data)?;
-    tokio::fs::write(DATA_FILE, json).await?;
+    tx.commit()?;
 
     tracing::debug!(
         "Saved {} sites, {} pages to {}",
-        data.sites.len(),
-        data.pages.len(),
-        DATA_FILE
+        STORE.site_pv.len(),
+        STORE.page_pv.len(),
+        DB_FILE
     );
     Ok(())
 }
 
-/// Load store from JSON file
+/// Load store from SQLite
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {
-    let path = Path::new(DATA_FILE);
-    if !path.exists() {
-        tracing::info!("No data file found, starting fresh");
-        return Ok(());
-    }
+    let conn = DB.lock().unwrap();
 
-    let content = std::fs::read_to_string(path)?;
-    let data: PersistedData = serde_json::from_str(&content)?;
+    // Load sites
+    {
+        let mut stmt = conn.prepare("SELECT hash, pv, uv, host FROM sites")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, i64>(2)?,
+                row.get::<_, Option<String>>(3)?,
+            ))
+        })?;
 
-    for (hash, site) in data.sites {
-        STORE.site_pv.insert(hash.clone(), AtomicU64::new(site.pv));
-        STORE.site_uv.insert(hash.clone(), AtomicU64::new(site.uv));
-        STORE.site_visitors.insert(hash.clone(), DashSet::new());
-        if let Some(host) = site.host {
-            STORE.site_hosts.insert(hash, host);
+        for row in rows {
+            let (hash, pv, uv, host) = row?;
+            STORE.site_pv.insert(hash.clone(), AtomicU64::new(pv as u64));
+            STORE.site_uv.insert(hash.clone(), AtomicU64::new(uv as u64));
+            STORE.site_visitors.insert(hash.clone(), DashSet::new());
+            if let Some(h) = host {
+                STORE.site_hosts.insert(hash, h);
+            }
         }
     }
 
-    for (key, page) in data.pages {
-        STORE.page_pv.insert(key.clone(), AtomicU64::new(page.pv));
-        if let Some(path) = page.path {
-            STORE.page_paths.insert(key, path);
+    // Load pages
+    {
+        let mut stmt = conn.prepare("SELECT key, pv, path FROM pages")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, Option<String>>(2)?,
+            ))
+        })?;
+
+        for row in rows {
+            let (key, pv, path) = row?;
+            STORE.page_pv.insert(key.clone(), AtomicU64::new(pv as u64));
+            if let Some(p) = path {
+                STORE.page_paths.insert(key, p);
+            }
         }
     }
 
@@ -135,7 +171,7 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
         "Loaded {} sites, {} pages from {}",
         STORE.site_pv.len(),
         STORE.page_pv.len(),
-        DATA_FILE
+        DB_FILE
     );
     Ok(())
 }
@@ -184,7 +220,7 @@ pub fn incr_site(site_hash: &str, user_identity: &str) -> (u64, u64) {
     (pv, uv)
 }
 
-/// Increment page PV only (no page UV in original busuanzi)
+/// Increment page PV only
 pub fn incr_page(page_key: &str) -> u64 {
     STORE
         .page_pv
@@ -218,6 +254,12 @@ pub fn get_page(page_key: &str) -> u64 {
 
 /// Store URL mappings for admin display
 pub fn set_url_mapping(site_hash: &str, page_key: &str, host: &str, path: &str) {
-    STORE.site_hosts.entry(site_hash.to_string()).or_insert_with(|| host.to_string());
-    STORE.page_paths.entry(page_key.to_string()).or_insert_with(|| path.to_string());
+    STORE
+        .site_hosts
+        .entry(site_hash.to_string())
+        .or_insert_with(|| host.to_string());
+    STORE
+        .page_paths
+        .entry(page_key.to_string())
+        .or_insert_with(|| path.to_string());
 }

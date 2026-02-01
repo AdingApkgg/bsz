@@ -4,9 +4,9 @@
 
 ## 特性
 
-- **零依赖部署** - 单一二进制，无需 Redis/数据库/Node.js
+- **零外部依赖** - 单一二进制，内置 SQLite，无需 Redis/外部数据库
 - **高性能** - 内存存储 + DashMap 并发安全
-- **自动持久化** - JSON 格式保存，便于查看和备份
+- **SQLite 持久化** - 内置数据库，支持事务，数据安全可靠
 - **完整管理后台** - 查看/编辑/删除/导入/导出数据
 - **Sitemap 同步** - 从 busuanzi.ibruce.info 迁移数据
 - **兼容原版** - 支持 site_pv、site_uv、page_pv
@@ -77,13 +77,14 @@ fetch('https://your-domain.com/api', {
 
 ## 数据持久化
 
-数据自动保存到 `data.json` 文件（可读 JSON 格式）：
+数据自动保存到 `data.db` (SQLite 数据库)：
 
 - 每 30 秒自动保存
 - Ctrl+C 退出时自动保存
 - 启动时自动加载
+- 支持事务，数据更安全
 
-备份只需复制 `data.json` 文件。
+备份只需复制 `data.db` 文件。可用任意 SQLite 工具查看/编辑。
 
 ## 从旧版迁移
 
@@ -111,7 +112,7 @@ cargo build --release  # 构建发布版本
 ├── static/            # 嵌入的静态文件
 ├── Dockerfile
 ├── compose.yml
-└── data.json          # 持久化数据 (运行时生成)
+└── data.db            # SQLite 数据库 (运行时生成)
 ```
 
 ## License
