@@ -12,7 +12,8 @@ use axum::{
 };
 use std::net::SocketAddr;
 use std::time::Duration;
-use tower_http::cors::{Any, CorsLayer};
+use axum::http::{header, HeaderName, Method};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::config::CONFIG;
@@ -46,25 +47,13 @@ async fn main() {
         }
     };
 
-    // CORS
-    let cors_layer = if CONFIG.cors == "*" {
-        CorsLayer::new()
-            .allow_origin(Any)
-            .allow_methods(Any)
-            .allow_headers(Any)
-            .expose_headers(Any)
-    } else {
-        let origins: Vec<_> = CONFIG
-            .cors
-            .split(',')
-            .filter_map(|s| s.trim().parse().ok())
-            .collect();
-        CorsLayer::new()
-            .allow_origin(origins)
-            .allow_methods(Any)
-            .allow_headers(Any)
-            .expose_headers(Any)
-    };
+    // CORS - support credentials for Cookie auth
+    let cors_layer = CorsLayer::new()
+        .allow_origin(tower_http::cors::AllowOrigin::mirror_request())
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, HeaderName::from_static("x-bsz-referer")])
+        .allow_credentials(true)
+        .expose_headers([header::SET_COOKIE]);
 
     // Admin routes (protected)
     let admin_routes = Router::new()
@@ -94,6 +83,8 @@ async fn main() {
         // Static files
         .route("/", get(static_files::serve_index))
         .route("/admin", get(static_files::serve_admin))
+        .route("/robots.txt", get(static_files::serve_robots))
+        .route("/llms.txt", get(static_files::serve_llms))
         .route("/static/*path", get(static_files::serve_static))
         // Middleware
         .layer(axum_middleware::from_fn(

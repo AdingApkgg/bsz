@@ -40,6 +40,14 @@ pub async fn serve_admin() -> Response {
     serve("admin.html")
 }
 
+pub async fn serve_robots() -> Response {
+    serve("robots.txt")
+}
+
+pub async fn serve_llms() -> Response {
+    serve("llms.txt")
+}
+
 pub async fn serve_static(Path(path): Path<String>) -> Response {
     serve(&path)
 }

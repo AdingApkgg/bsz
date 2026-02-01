@@ -236,7 +236,7 @@ pub async fn sync_handler(
             match result {
                 Ok((site_pv, site_uv, page_pv, host, path)) => {
                     let keys = get_keys(&host, &path);
-                    store_stats(&keys.site_hash, &keys.page_key, &host, &path, site_pv, site_uv, page_pv);
+                    store_stats(&keys.site_key, &keys.page_key, site_pv, site_uv, page_pv);
                     imported += 1;
 
                     yield Ok(Event::default().event("progress").data(
@@ -314,56 +314,40 @@ async fn fetch_and_parse(
     Ok((site_pv, site_uv, page_pv, host, path))
 }
 
-fn store_stats(
-    site_hash: &str,
-    page_key: &str,
-    host: &str,
-    path: &str,
-    site_pv: u64,
-    site_uv: u64,
-    page_pv: u64,
-) {
+fn store_stats(site_key: &str, page_key: &str, site_pv: u64, site_uv: u64, page_pv: u64) {
     // Only update if higher
     let current_site_pv = STORE
         .site_pv
-        .get(site_hash)
+        .get(site_key)
         .map(|v| v.load(Ordering::Relaxed))
         .unwrap_or(0);
 
     if site_pv > current_site_pv {
         STORE
             .site_pv
-            .entry(site_hash.to_string())
+            .entry(site_key.to_string())
             .or_insert_with(|| AtomicU64::new(0))
             .store(site_pv, Ordering::Relaxed);
     }
 
     let current_site_uv = STORE
         .site_uv
-        .get(site_hash)
+        .get(site_key)
         .map(|v| v.load(Ordering::Relaxed))
         .unwrap_or(0);
 
     if site_uv > current_site_uv {
         STORE
             .site_uv
-            .entry(site_hash.to_string())
+            .entry(site_key.to_string())
             .or_insert_with(|| AtomicU64::new(0))
             .store(site_uv, Ordering::Relaxed);
     }
 
     STORE
         .site_visitors
-        .entry(site_hash.to_string())
+        .entry(site_key.to_string())
         .or_default();
-    STORE
-        .site_hosts
-        .entry(site_hash.to_string())
-        .or_insert_with(|| host.to_string());
-    STORE
-        .page_paths
-        .entry(page_key.to_string())
-        .or_insert_with(|| path.to_string());
 
     STORE
         .page_pv

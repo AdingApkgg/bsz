@@ -3,7 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>不蒜子 - 极简网页计数器</title>
+  <title>不蒜子 - 极简网页计数器 | Busuanzi Visitor Counter</title>
+  
+  <!-- SEO Meta -->
+  <meta name="description" content="不蒜子是一个简洁的网站访客统计服务，零依赖、高性能。支持 site_pv、site_uv、page_pv 统计，提供 RESTful API 接口。">
+  <meta name="keywords" content="busuanzi,不蒜子,网站统计,访客计数器,PV,UV,page view,visitor counter,Rust">
+  <meta name="author" content="AdingApkgg">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bsz.saop.cc/">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="不蒜子 - 极简网页计数器">
+  <meta property="og:description" content="简洁的网站访客统计服务，零依赖、高性能。支持 site_pv、site_uv、page_pv 统计。">
+  <meta property="og:url" content="https://bsz.saop.cc/">
+  <meta property="og:site_name" content="Busuanzi">
+  <meta property="og:locale" content="zh_CN">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="不蒜子 - 极简网页计数器">
+  <meta name="twitter:description" content="简洁的网站访客统计服务，零依赖、高性能。">
+  
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "不蒜子 Busuanzi",
+    "description": "简洁的网站访客统计服务，零依赖、高性能",
+    "url": "https://bsz.saop.cc/",
+    "applicationCategory": "WebApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CNY"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "AdingApkgg",
+      "url": "https://github.com/AdingApkgg"
+    }
+  }
+  </script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --accent: #3b82f6; }
@@ -24,126 +68,140 @@
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
     th { color: var(--muted); font-weight: 500; }
     a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
     footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem; }
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
     .stat-value { font-size: 2rem; font-weight: 600; color: var(--accent); }
     .stat-label { font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem; }
     @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
+    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0; }
+    .feature { padding: 0.75rem; background: rgba(59,130,246,0.1); border-radius: 8px; font-size: 0.875rem; }
+    @media (max-width: 480px) { .features { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>不蒜子.rs</h1>
-    <p class="subtitle">简洁的网站访客统计服务</p>
+  <main class="container">
+    <header>
+      <h1>不蒜子.rs</h1>
+      <p class="subtitle">简洁的网站访客统计服务 · Rust 高性能实现</p>
+    </header>
 
-    <div class="stats">
-      <div class="stat">
+    <section class="stats" aria-label="实时统计">
+      <article class="stat">
         <div class="stat-value" id="site_pv">-</div>
-        <div class="stat-label">站点访问</div>
-      </div>
-      <div class="stat">
+        <div class="stat-label">站点访问 (PV)</div>
+      </article>
+      <article class="stat">
         <div class="stat-value" id="site_uv">-</div>
-        <div class="stat-label">站点访客</div>
-      </div>
-      <div class="stat">
+        <div class="stat-label">站点访客 (UV)</div>
+      </article>
+      <article class="stat">
         <div class="stat-value" id="page_pv">-</div>
         <div class="stat-label">本页访问</div>
-      </div>
-    </div>
+      </article>
+    </section>
 
-    <div class="card">
+    <section class="card">
+      <h2>特性</h2>
+      <div class="features">
+        <div class="feature">零外部依赖，单一二进制</div>
+        <div class="feature">内置 SQLite，数据持久化</div>
+        <div class="feature">高性能内存缓存</div>
+        <div class="feature">RESTful API 接口</div>
+        <div class="feature">兼容原版 busuanzi</div>
+        <div class="feature">完整管理后台</div>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>API 接口</h2>
       <table>
-        <tr><th>方法</th><th>路径</th><th>说明</th></tr>
-        <tr><td>POST</td><td>/api</td><td>统计并返回 PV/UV</td></tr>
-        <tr><td>GET</td><td>/api</td><td>仅获取 PV/UV (不计数)</td></tr>
-        <tr><td>PUT</td><td>/api</td><td>仅提交统计 (不返回)</td></tr>
+        <thead>
+          <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/api</td><td>统计并返回 PV/UV</td></tr>
+          <tr><td>GET</td><td>/api</td><td>仅获取 PV/UV (不计数)</td></tr>
+          <tr><td>PUT</td><td>/api</td><td>仅提交统计 (不返回)</td></tr>
+          <tr><td>GET</td><td>/ping</td><td>健康检查</td></tr>
+        </tbody>
       </table>
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>请求头</h2>
       <table>
-        <tr><th>Header</th><th>说明</th></tr>
-        <tr><td>x-bsz-referer</td><td>页面 URL (必须)</td></tr>
-        <tr><td>Authorization</td><td>Bearer {token} (可选，用于识别访客)</td></tr>
+        <thead>
+          <tr><th>Header</th><th>必须</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>x-bsz-referer</code></td><td>是</td><td>当前页面 URL</td></tr>
+        </tbody>
       </table>
-    </div>
+      <p>访客身份通过 Cookie (<code>busuanziId</code>) 自动识别，与原版 busuanzi 兼容。</p>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>响应格式</h2>
 <pre><code>{
   <span class="s">"success"</span>: <span class="k">true</span>,
   <span class="s">"data"</span>: {
-    <span class="s">"site_pv"</span>: <span class="n">1234</span>,
-    <span class="s">"site_uv"</span>: <span class="n">567</span>,
-    <span class="s">"page_pv"</span>: <span class="n">89</span>,
-    <span class="s">"page_uv"</span>: <span class="n">42</span>
+    <span class="s">"site_pv"</span>: <span class="n">1234</span>,  <span class="c">// 站点总访问量</span>
+    <span class="s">"site_uv"</span>: <span class="n">567</span>,   <span class="c">// 站点独立访客</span>
+    <span class="s">"page_pv"</span>: <span class="n">89</span>     <span class="c">// 当前页面访问量</span>
   }
 }</code></pre>
-      <p>响应头 <code>Set-Bsz-Identity</code> 返回访客 token，下次请求时带上可识别同一访客。</p>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>使用示例</h2>
-<pre><code><span class="c">// 获取统计数据</span>
-<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'/api'</span>, {
+    <section class="card">
+      <h2>快速开始</h2>
+<pre><code><span class="c">// 统计当前页面并获取数据</span>
+<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://bsz.saop.cc/api'</span>, {
   method: <span class="s">'POST'</span>,
-  headers: {
-    <span class="s">'x-bsz-referer'</span>: location.href,
-    <span class="c">// 可选: 'Authorization': 'Bearer ' + token</span>
-  }
+  credentials: <span class="s">'include'</span>,  <span class="c">// 携带 Cookie</span>
+  headers: { <span class="s">'x-bsz-referer'</span>: location.href }
 });
 
 <span class="k">const</span> { data } = <span class="k">await</span> res.json();
-console.log(data.site_pv, data.page_pv);
+console.log(<span class="s">'PV:'</span>, data.site_pv, <span class="s">'UV:'</span>, data.site_uv);</code></pre>
+    </section>
 
-<span class="c">// 保存 token 用于识别访客</span>
-<span class="k">const</span> token = res.headers.get(<span class="s">'Set-Bsz-Identity'</span>);
-<span class="k">if</span> (token) localStorage.setItem(<span class="s">'bsz-id'</span>, token);</code></pre>
-    </div>
-
-    <div class="card">
+    <section class="card">
       <h2>完整示例</h2>
-<pre><code><span class="c">&lt;!-- HTML --&gt;</span>
-&lt;span id=<span class="s">"pv"</span>&gt;-&lt;/span&gt; 次访问
+<pre><code><span class="c">&lt;!-- 在页面中显示访问统计 --&gt;</span>
+&lt;p&gt;本站访问 &lt;span id=<span class="s">"pv"</span>&gt;-&lt;/span&gt; 次&lt;/p&gt;
 
-<span class="c">&lt;!-- JavaScript --&gt;</span>
 &lt;script&gt;
 (<span class="k">async</span> () =&gt; {
-  <span class="k">const</span> token = localStorage.getItem(<span class="s">'bsz-id'</span>);
   <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://bsz.saop.cc/api'</span>, {
     method: <span class="s">'POST'</span>,
-    headers: {
-      <span class="s">'x-bsz-referer'</span>: location.href,
-      ...(token && { <span class="s">'Authorization'</span>: <span class="s">'Bearer '</span> + token })
-    }
+    credentials: <span class="s">'include'</span>,
+    headers: { <span class="s">'x-bsz-referer'</span>: location.href }
   });
-  <span class="k">const</span> { data } = <span class="k">await</span> res.json();
-  document.getElementById(<span class="s">'pv'</span>).textContent = data.page_pv;
   
-  <span class="k">const</span> id = res.headers.get(<span class="s">'Set-Bsz-Identity'</span>);
-  <span class="k">if</span> (id) localStorage.setItem(<span class="s">'bsz-id'</span>, id);
+  <span class="k">const</span> { data } = <span class="k">await</span> res.json();
+  document.getElementById(<span class="s">'pv'</span>).textContent = data.site_pv;
 })();
 &lt;/script&gt;</code></pre>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <footer>
-    <a href="https://github.com/AdingApkgg/bsz">GitHub</a> · <a href="/admin">管理面板</a>
+    <nav>
+      <a href="https://github.com/AdingApkgg/bsz" rel="noopener">GitHub</a> · 
+      <a href="/admin">管理面板</a>
+    </nav>
+    <p style="margin-top:0.5rem">Powered by Rust + Axum + SQLite</p>
   </footer>
 
   <script>
     (async () => {
-      const token = localStorage.getItem('bsz-id');
       try {
         const res = await fetch('/api', {
           method: 'POST',
-          headers: {
-            'x-bsz-referer': location.href,
-            ...(token && { 'Authorization': 'Bearer ' + token })
-          }
+          credentials: 'include',
+          headers: { 'x-bsz-referer': location.href }
         });
         const { success, data } = await res.json();
         if (success) {
@@ -151,8 +209,6 @@ console.log(data.site_pv, data.page_pv);
           document.getElementById('site_uv').textContent = data.site_uv.toLocaleString();
           document.getElementById('page_pv').textContent = data.page_pv.toLocaleString();
         }
-        const id = res.headers.get('Set-Bsz-Identity');
-        if (id) localStorage.setItem('bsz-id', id);
       } catch (e) {}
     })();
   </script>

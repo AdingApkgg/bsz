@@ -58,6 +58,7 @@
     
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; z-index: 100; }
     .modal.show { display: flex; }
+    .modal.modal-top { z-index: 150; }
     .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
     .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .modal-header h3 { font-size: 1rem; font-weight: 500; }
@@ -79,8 +80,6 @@
     .toast.success { border-color: var(--success); color: var(--success); }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    .auto-refresh { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--muted); }
-    .auto-refresh input { width: 16px; height: 16px; }
     
     .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); }
     
@@ -101,14 +100,8 @@
     <div class="header">
       <h1>Busuanzi Admin</h1>
       <div class="header-actions">
-        <label class="auto-refresh">
-          <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
-          自动刷新
-        </label>
-        <button class="btn btn-primary" onclick="openSync()">同步</button>
-        <button class="btn btn-ghost" onclick="openImport()">导入</button>
+        <button class="btn btn-primary" onclick="openImport()">导入</button>
         <button class="btn btn-ghost" onclick="exportData()">导出</button>
-        <button class="btn btn-ghost" onclick="init()">↻ 刷新</button>
         <button class="btn btn-ghost" onclick="logout()">登出</button>
       </div>
     </div>
@@ -133,14 +126,14 @@
             </div>
 
     <div class="toolbar">
-      <input type="text" class="search" id="search" placeholder="搜索站点 Hash..." oninput="filterKeys()">
+      <input type="text" class="search" id="search" placeholder="搜索站点域名..." oninput="filterKeys()">
       <div class="toolbar-right">
         <select class="sort-select" id="sort" onchange="filterKeys()">
           <option value="pv-desc">PV 降序</option>
           <option value="pv-asc">PV 升序</option>
           <option value="uv-desc">UV 降序</option>
           <option value="uv-asc">UV 升序</option>
-          <option value="hash-asc">Hash A-Z</option>
+          <option value="key-asc">域名 A-Z</option>
         </select>
       </div>
             </div>
@@ -149,7 +142,7 @@
       <table>
                 <thead>
                     <tr>
-            <th style="width:40%">站点</th>
+            <th style="width:40%">域名</th>
             <th>PV</th>
             <th>UV</th>
             <th>页面</th>
@@ -175,8 +168,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>站点 Hash</label>
-                        <input type="text" id="edit-hash" readonly>
+                        <label>站点域名</label>
+                        <input type="text" id="edit-key" readonly>
                     </div>
         <div class="form-row">
                     <div class="form-group">
@@ -196,14 +189,14 @@
             </div>
         </div>
 
-  <div id="delete-modal" class="modal" onclick="if(event.target===this)closeModal('delete-modal')">
+  <div id="delete-modal" class="modal modal-top" onclick="if(event.target===this)closeModal('delete-modal')">
     <div class="modal-content">
                 <div class="modal-header">
                     <h3>确认删除</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('delete-modal')">✕</button>
                 </div>
                 <div class="modal-body">
-        <p>确定删除 <code id="delete-hash" style="color:var(--accent)"></code> 的所有数据？</p>
+        <p>确定删除 <code id="delete-key" style="color:var(--accent)"></code> 的所有数据？</p>
         <p style="color:var(--danger);margin-top:0.75rem;font-size:0.875rem">⚠ 此操作不可恢复！</p>
                 </div>
                 <div class="modal-footer">
@@ -216,7 +209,7 @@
   <div id="pages-modal" class="modal" onclick="if(event.target===this)closeModal('pages-modal')">
     <div class="modal-content" style="max-width:700px">
       <div class="modal-header">
-        <h3>页面列表 - <code id="pages-site-hash" style="font-size:0.8rem"></code></h3>
+        <h3>页面列表 - <code id="pages-site-key" style="font-size:0.8rem"></code></h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('pages-modal')">✕</button>
       </div>
       <div class="modal-body" style="padding:0;max-height:60vh;overflow-y:auto">
@@ -236,7 +229,7 @@
     </div>
   </div>
 
-  <div id="edit-page-modal" class="modal" onclick="if(event.target===this)closeModal('edit-page-modal')">
+  <div id="edit-page-modal" class="modal modal-top" onclick="if(event.target===this)closeModal('edit-page-modal')">
     <div class="modal-content">
       <div class="modal-header">
         <h3>编辑页面 PV</h3>
@@ -260,60 +253,55 @@
   </div>
 
   <div id="import-modal" class="modal" onclick="if(event.target===this)closeModal('import-modal')">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width:480px">
       <div class="modal-header">
-        <h3>导入数据库</h3>
+        <h3>导入数据</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('import-modal')">✕</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>选择 data.db 文件</label>
-          <input type="file" id="import-file" accept=".db" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
+        <div class="import-tabs" style="display:flex;gap:0.5rem;margin-bottom:1rem">
+          <button class="btn btn-primary" id="tab-db" onclick="switchImportTab('db')">数据库</button>
+          <button class="btn btn-ghost" id="tab-sync" onclick="switchImportTab('sync')">Sitemap 同步</button>
         </div>
-        <p class="help">上传从导出功能下载的 SQLite 数据库文件 (.db)</p>
-        <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 导入将覆盖现有数据！</p>
+        
+        <div id="import-db-panel">
+          <div class="form-group">
+            <label>选择 data.db 文件</label>
+            <input type="file" id="import-file" accept=".db" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
+          </div>
+          <p class="help">上传从导出功能下载的 SQLite 数据库文件</p>
+          <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 导入将覆盖现有数据！</p>
+        </div>
+        
+        <div id="import-sync-panel" class="hidden">
+          <div class="form-group">
+            <label>Sitemap URL</label>
+            <input type="url" id="sync-sitemap" placeholder="https://example.com/sitemap.xml">
+          </div>
+          <div class="form-group">
+            <label>或上传 XML 文件</label>
+            <input type="file" id="sync-file" accept=".xml" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
+          </div>
+          <div class="form-group">
+            <label>并发数</label>
+            <input type="number" id="sync-concurrency" value="3" min="1" max="10" style="width:80px">
+          </div>
+          <p class="help">从 sitemap.xml 获取 URL，从 busuanzi.ibruce.info 拉取数据</p>
+          <div id="sync-progress" class="hidden" style="margin-top:1rem">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div id="progress-stats" style="display:flex;gap:1rem;margin:0.5rem 0;font-size:0.75rem;color:var(--muted)">
+              <span>进度: <b id="p-current">0</b>/<b id="p-total">0</b></span>
+              <span>成功: <b id="p-imported" style="color:var(--success)">0</b></span>
+              <span>失败: <b id="p-errors" style="color:var(--danger)">0</b></span>
+            </div>
+            <div id="progress-current" style="padding:0.5rem;background:var(--bg);border-radius:4px;font-size:0.8rem;font-family:monospace;max-height:120px;overflow-y:auto"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('import-modal')">取消</button>
-        <button class="btn btn-primary" onclick="doImport()">导入</button>
+        <button class="btn btn-primary" id="import-btn" onclick="doImportAction()">导入</button>
       </div>
-    </div>
-  </div>
-
-  <div id="sync-modal" class="modal" onclick="if(event.target===this)closeModal('sync-modal')">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>从 Sitemap 同步</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('sync-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>方式一: 输入 Sitemap URL</label>
-          <input type="url" id="sync-sitemap" placeholder="https://example.com/sitemap.xml">
-        </div>
-        <div class="form-group">
-          <label>方式二: 上传 XML 文件</label>
-          <input type="file" id="sync-file" accept=".xml" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
-        </div>
-        <div class="form-group">
-          <label>并发数</label>
-          <input type="number" id="sync-concurrency" value="3" min="1" max="10" style="width:80px">
-        </div>
-        <p class="help">从 sitemap.xml 获取所有页面 URL，并发从 busuanzi.ibruce.info 拉取 PV 数据。</p>
-        <div id="sync-progress" class="hidden" style="margin-top:1rem">
-          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-          <div id="progress-stats" style="display:flex;gap:1rem;margin:0.5rem 0;font-size:0.75rem;color:var(--muted)">
-            <span>进度: <b id="p-current">0</b>/<b id="p-total">0</b></span>
-            <span>成功: <b id="p-imported" style="color:var(--success)">0</b></span>
-            <span>失败: <b id="p-errors" style="color:var(--danger)">0</b></span>
-          </div>
-          <div id="progress-current" style="padding:0.5rem;background:var(--bg);border-radius:4px;font-size:0.8rem;font-family:monospace;max-height:120px;overflow-y:auto"></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('sync-modal')">取消</button>
-        <button class="btn btn-primary" id="sync-btn" onclick="doSync()">开始同步</button>
-        </div>
     </div>
   </div>
 
@@ -323,8 +311,7 @@
     const API = '/api/admin';
     let token = localStorage.getItem('admin-token') || '';
     let allKeys = [];
-    let currentHash = '';
-    let refreshInterval = null;
+    let currentSiteKey = '';
 
     const $ = id => document.getElementById(id);
     const fmt = n => n?.toLocaleString() ?? '-';
@@ -358,7 +345,6 @@
       $('auth').classList.remove('hidden');
       $('main').classList.add('hidden');
       $('token-input').value = '';
-      if (refreshInterval) clearInterval(refreshInterval);
     }
 
     async function init() {
@@ -398,7 +384,7 @@
 
     function filterKeys() {
       const q = $('search').value.toLowerCase().trim();
-      let filtered = q ? allKeys.filter(k => k.site_hash.toLowerCase().includes(q)) : [...allKeys];
+      let filtered = q ? allKeys.filter(k => k.site_key.toLowerCase().includes(q)) : [...allKeys];
       
       const sort = $('sort').value;
       filtered.sort((a, b) => {
@@ -407,7 +393,7 @@
           case 'pv-asc': return (a.site_pv || 0) - (b.site_pv || 0);
           case 'uv-desc': return (b.site_uv || 0) - (a.site_uv || 0);
           case 'uv-asc': return (a.site_uv || 0) - (b.site_uv || 0);
-          case 'hash-asc': return a.site_hash.localeCompare(b.site_hash);
+          case 'key-asc': return a.site_key.localeCompare(b.site_key);
           default: return 0;
         }
       });
@@ -423,30 +409,31 @@
         return;
       }
       tbody.innerHTML = keys.map(k => {
-        const display = k.host || k.site_hash;
+        const display = k.site_key;
         const shortDisplay = display.length > 30 ? display.slice(0, 27) + '...' : display;
+        const safeKey = k.site_key.replace(/'/g, "\\'");
         return `
         <tr>
-          <td class="hash" onclick="copyHash('${k.site_hash}')" title="${k.host || k.site_hash}&#10;Hash: ${k.site_hash}">${shortDisplay}</td>
+          <td class="hash" onclick="copyText('${safeKey}')" title="${k.site_key}">${shortDisplay}</td>
           <td class="num">${fmt(k.site_pv)}</td>
           <td class="num">${fmt(k.site_uv)}</td>
-          <td class="num"><a href="#" onclick="openPages('${k.site_hash}');return false" style="color:var(--accent)">${fmt(k.page_count)}</a></td>
+          <td class="num"><a href="#" onclick="openPages('${safeKey}');return false" style="color:var(--accent)">${fmt(k.page_count)}</a></td>
           <td class="actions">
-            <button class="btn btn-ghost btn-sm" onclick="openEdit('${k.site_hash}', ${k.site_pv || 0}, ${k.site_uv || 0})">编辑</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openDelete('${k.site_hash}')">删除</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEdit('${safeKey}', ${k.site_pv || 0}, ${k.site_uv || 0})">编辑</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openDelete('${safeKey}')">删除</button>
           </td>
         </tr>
       `}).join('');
     }
 
-    function copyHash(hash) {
-      navigator.clipboard.writeText(hash);
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
       toast('已复制');
     }
 
-    function openEdit(hash, pv, uv) {
-      currentHash = hash;
-      $('edit-hash').value = hash;
+    function openEdit(siteKey, pv, uv) {
+      currentSiteKey = siteKey;
+      $('edit-key').value = siteKey;
       $('edit-pv').value = pv;
       $('edit-uv').value = uv;
       $('edit-modal').classList.add('show');
@@ -461,13 +448,13 @@
         await fetch(API + '/keys/update', {
           method: 'POST',
           headers: headers(),
-          body: JSON.stringify({ site_hash: currentHash, key_type: 'site_pv', value: pv })
+          body: JSON.stringify({ site_key: currentSiteKey, key_type: 'site_pv', value: pv })
         });
         // Save UV
         await fetch(API + '/keys/update', {
           method: 'POST',
           headers: headers(),
-          body: JSON.stringify({ site_hash: currentHash, key_type: 'site_uv', value: uv })
+          body: JSON.stringify({ site_key: currentSiteKey, key_type: 'site_uv', value: uv })
         });
         toast('已保存');
         closeModal('edit-modal');
@@ -477,15 +464,15 @@
       }
     }
 
-    function openDelete(hash) {
-      currentHash = hash;
-      $('delete-hash').textContent = hash;
+    function openDelete(siteKey) {
+      currentSiteKey = siteKey;
+      $('delete-key').textContent = siteKey;
       $('delete-modal').classList.add('show');
     }
 
     async function confirmDelete() {
       try {
-        let url = API + '/keys?site_hash=' + encodeURIComponent(currentHash);
+        let url = API + '/keys?site_key=' + encodeURIComponent(currentSiteKey);
         if (currentPageKey) {
           url += '&page_key=' + encodeURIComponent(currentPageKey);
         }
@@ -498,7 +485,7 @@
         closeModal('delete-modal');
         if (currentPageKey) {
           currentPageKey = '';
-          openPages(currentHash); // Refresh pages list
+          openPages(currentSiteKey); // Refresh pages list
         } else {
           init();
         }
@@ -510,14 +497,14 @@
     // ==================== Pages Management ====================
     let currentPageKey = '';
 
-    async function openPages(siteHash) {
-      currentHash = siteHash;
-      $('pages-site-hash').textContent = siteHash;
+    async function openPages(siteKey) {
+      currentSiteKey = siteKey;
+      $('pages-site-key').textContent = siteKey;
       $('pages-body').innerHTML = '<tr><td colspan="3" class="empty">加载中...</td></tr>';
       $('pages-modal').classList.add('show');
 
       try {
-        const res = await fetch(API + '/pages?site_hash=' + encodeURIComponent(siteHash), { headers: headers() });
+        const res = await fetch(API + '/pages?site_key=' + encodeURIComponent(siteKey), { headers: headers() });
         const json = await res.json();
         const pages = json.data || [];
         
@@ -527,16 +514,17 @@
         }
 
         $('pages-body').innerHTML = pages.map(p => {
-          const display = p.path || p.page_hash;
+          const display = p.path;
           const shortDisplay = display.length > 40 ? display.slice(0, 37) + '...' : display;
-          const safeDisplay = shortDisplay.replace(/'/g, "\\'");
+          const safePageKey = p.page_key.replace(/'/g, "\\'");
+          const safePath = p.path.replace(/'/g, "\\'");
           return `
           <tr>
-            <td class="hash" onclick="copyHash('${p.path || p.page_hash}')" title="${p.path || ''}&#10;Hash: ${p.page_hash}">${shortDisplay}</td>
+            <td class="hash" onclick="copyText('${safePath}')" title="${p.path}">${shortDisplay}</td>
             <td class="num">${fmt(p.pv)}</td>
             <td class="actions">
-              <button class="btn btn-ghost btn-sm" onclick="openPageEdit('${p.page_key}', ${p.pv})">编辑</button>
-              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openPageDelete('${p.page_key}', '${safeDisplay}')">删除</button>
+              <button class="btn btn-ghost btn-sm" onclick="openPageEdit('${safePageKey}', ${p.pv})">编辑</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openPageDelete('${safePageKey}', '${shortDisplay.replace(/'/g, "\\'")}')">删除</button>
             </td>
           </tr>
         `}).join('');
@@ -564,43 +552,57 @@
         if (!res.ok) throw new Error();
         toast('已保存');
         closeModal('edit-page-modal');
-        openPages(currentHash); // Refresh
+        openPages(currentSiteKey); // Refresh
       } catch (e) {
         toast('保存失败', 'error');
       }
     }
 
-    function openPageDelete(pageKey, pageHash) {
+    function openPageDelete(pageKey, pagePath) {
       currentPageKey = pageKey;
-      $('delete-hash').textContent = '页面 ' + pageHash;
+      $('delete-key').textContent = '页面 ' + pagePath;
       $('delete-modal').classList.add('show');
     }
 
     function exportData() {
-      // Download data.db directly
       const link = document.createElement('a');
       link.href = API + '/export?token=' + encodeURIComponent(token);
       link.click();
       toast('开始下载 data.db');
     }
 
-    function toggleAutoRefresh() {
-      if ($('auto-refresh').checked) {
-        refreshInterval = setInterval(init, 10000);
-        toast('已开启自动刷新 (10s)');
-      } else {
-        if (refreshInterval) clearInterval(refreshInterval);
-        refreshInterval = null;
-        toast('已关闭自动刷新');
-      }
+    // ==================== Import ====================
+    let currentImportTab = 'db';
+    let syncEventSource = null;
+
+    function switchImportTab(tab) {
+      currentImportTab = tab;
+      $('tab-db').className = tab === 'db' ? 'btn btn-primary' : 'btn btn-ghost';
+      $('tab-sync').className = tab === 'sync' ? 'btn btn-primary' : 'btn btn-ghost';
+      $('import-db-panel').classList.toggle('hidden', tab !== 'db');
+      $('import-sync-panel').classList.toggle('hidden', tab !== 'sync');
+      $('import-btn').textContent = tab === 'db' ? '导入' : '开始同步';
     }
 
     function openImport() {
       $('import-file').value = '';
+      $('sync-sitemap').value = '';
+      $('sync-file').value = '';
+      $('sync-progress').classList.add('hidden');
+      $('import-btn').disabled = false;
+      switchImportTab('db');
       $('import-modal').classList.add('show');
     }
 
-    async function doImport() {
+    async function doImportAction() {
+      if (currentImportTab === 'db') {
+        await doImportDb();
+      } else {
+        await doSync();
+      }
+    }
+
+    async function doImportDb() {
       const file = $('import-file').files[0];
       if (!file) {
         return toast('请选择 data.db 文件', 'error');
@@ -625,18 +627,6 @@
       }
     }
 
-    function openSync() {
-      $('sync-sitemap').value = '';
-      $('sync-file').value = '';
-      $('sync-progress').classList.add('hidden');
-      $('sync-btn').disabled = false;
-      $('sync-btn').textContent = '开始同步';
-      $('sync-modal').classList.add('show');
-      $('sync-sitemap').focus();
-    }
-
-    let syncEventSource = null;
-
     async function doSync() {
       const sitemap = $('sync-sitemap').value.trim();
       const file = $('sync-file').files[0];
@@ -646,7 +636,7 @@
         return toast('请输入 Sitemap URL 或上传 XML 文件', 'error');
       }
 
-      const btn = $('sync-btn');
+      const btn = $('import-btn');
       const progress = $('sync-progress');
       const currentLog = $('progress-current');
       
@@ -654,12 +644,10 @@
       btn.textContent = '同步中...';
       progress.classList.remove('hidden');
 
-      // Close any existing connection
       if (syncEventSource) syncEventSource.close();
 
       let syncUrl;
 
-      // If file is uploaded, first upload and get sync_id
       if (file) {
         currentLog.innerHTML = `<div style="color:var(--muted)">正在解析上传的 XML 文件...</div>`;
         
@@ -679,7 +667,7 @@
             btn.textContent = '重试';
             return;
           }
-          currentLog.innerHTML = `<div style="color:var(--muted)">解析完成，发现 ${result.url_count} 个 URL，开始同步 (并发: ${concurrency})...</div>`;
+          currentLog.innerHTML = `<div style="color:var(--muted)">解析完成，发现 ${result.url_count} 个 URL...</div>`;
           syncUrl = `${API}/sync?sync_id=${encodeURIComponent(result.sync_id)}&concurrency=${concurrency}&token=${encodeURIComponent(token)}`;
         } catch (e) {
           currentLog.innerHTML = `<div style="color:var(--danger)">上传失败: ${e.message}</div>`;
@@ -688,7 +676,7 @@
           return;
         }
       } else {
-        currentLog.innerHTML = `<div style="color:var(--muted)">正在获取 sitemap (并发: ${concurrency})...</div>`;
+        currentLog.innerHTML = `<div style="color:var(--muted)">正在获取 sitemap...</div>`;
         syncUrl = `${API}/sync?sitemap_url=${encodeURIComponent(sitemap)}&concurrency=${concurrency}&token=${encodeURIComponent(token)}`;
       }
 
@@ -696,30 +684,19 @@
 
       syncEventSource.addEventListener('progress', (e) => {
         const d = JSON.parse(e.data);
-        
-        // Update stats
         if (d.total) {
           $('p-total').textContent = d.total;
           $('p-current').textContent = d.current || 0;
           $('p-imported').textContent = d.imported || 0;
           $('p-errors').textContent = d.errors || 0;
-          
-          const pct = Math.round((d.current / d.total) * 100);
-          $('progress-fill').style.width = pct + '%';
+          $('progress-fill').style.width = Math.round((d.current / d.total) * 100) + '%';
         }
-        
-        // Update current item log
         if (d.path) {
-          let line;
-          if (d.error) {
-            line = `<div style="color:var(--danger)">✗ ${d.path}</div>`;
-          } else {
-            line = `<div><span style="color:var(--success)">✓</span> ${d.path} <span style="color:var(--muted)">PV:${d.page_pv}</span></div>`;
-          }
+          const line = d.error 
+            ? `<div style="color:var(--danger)">✗ ${d.path}</div>`
+            : `<div><span style="color:var(--success)">✓</span> ${d.path} <span style="color:var(--muted)">PV:${d.page_pv}</span></div>`;
           currentLog.innerHTML = line + currentLog.innerHTML;
-          // Keep only last 20 lines
-          const lines = currentLog.children;
-          while (lines.length > 20) lines[lines.length - 1].remove();
+          while (currentLog.children.length > 20) currentLog.lastChild.remove();
         } else if (d.message) {
           currentLog.innerHTML = `<div style="color:var(--muted)">${d.message}</div>` + currentLog.innerHTML;
         }
@@ -758,7 +735,6 @@
         closeModal('edit-modal');
         closeModal('delete-modal');
         closeModal('import-modal');
-        closeModal('sync-modal');
         closeModal('pages-modal');
         closeModal('edit-page-modal');
       }

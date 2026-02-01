@@ -1,0 +1,68 @@
+# Busuanzi - 极简网页计数器
+
+## 概述
+Busuanzi 是一个简洁的网站访客统计服务，使用 Rust 实现，零外部依赖。兼容原版 busuanzi.ibruce.info。
+
+## 主要功能
+- site_pv: 站点总访问量
+- site_uv: 站点独立访客数
+- page_pv: 页面访问量
+
+## API 使用
+
+### 统计并获取数据 (POST /api)
+```javascript
+const res = await fetch('https://bsz.saop.cc/api', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'x-bsz-referer': location.href }
+});
+const { data } = await res.json();
+// data.site_pv, data.site_uv, data.page_pv
+```
+
+### 仅获取数据 (GET /api)
+```javascript
+const res = await fetch('https://bsz.saop.cc/api', {
+  credentials: 'include',
+  headers: { 'x-bsz-referer': location.href }
+});
+```
+
+### 仅提交统计 (PUT /api)
+```javascript
+await fetch('https://bsz.saop.cc/api', {
+  method: 'PUT',
+  credentials: 'include',
+  headers: { 'x-bsz-referer': location.href }
+});
+```
+
+## 请求头
+- x-bsz-referer: 必须，当前页面 URL
+
+## 响应格式
+```json
+{
+  "success": true,
+  "data": {
+    "site_pv": 1234,
+    "site_uv": 567,
+    "page_pv": 89
+  }
+}
+```
+
+## 访客识别
+通过 Cookie (busuanziId) 自动识别访客身份，与原版 busuanzi 兼容。
+Cookie 格式: MD5(IP + UserAgent) 大写十六进制，有效期1年。
+
+跨域请求需要设置 credentials: 'include' 以携带 Cookie。
+
+## 技术栈
+- Rust + Axum (Web 框架)
+- SQLite (持久化)
+- DashMap (内存缓存)
+
+## 源码
+https://github.com/AdingApkgg/bsz

@@ -10,32 +10,30 @@ use crate::state::STORE;
 
 #[derive(Debug, Deserialize)]
 pub struct ListPagesParams {
-    pub site_hash: String,
+    pub site_key: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct PageInfo {
     pub page_key: String,
-    pub page_hash: String,
-    pub path: Option<String>,
+    pub path: String,
     pub pv: u64,
 }
 
-/// GET /api/admin/pages?site_hash=xxx
+/// GET /api/admin/pages?site_key=xxx
 pub async fn list_pages_handler(Query(params): Query<ListPagesParams>) -> impl IntoResponse {
-    let prefix = format!("{}:", params.site_hash);
+    let prefix = format!("{}:", params.site_key);
     let mut pages: Vec<PageInfo> = Vec::new();
 
     for entry in STORE.page_pv.iter() {
         let key = entry.key();
         if key.starts_with(&prefix) {
             let pv = entry.value().load(Ordering::Relaxed);
-            let page_hash = key.strip_prefix(&prefix).unwrap_or(key).to_string();
-            let path = STORE.page_paths.get(key).map(|v| v.clone());
+            // page_key is "host:path", extract path after first colon
+            let path = key.strip_prefix(&prefix).unwrap_or(key).to_string();
 
             pages.push(PageInfo {
                 page_key: key.clone(),
-                page_hash,
                 path,
                 pv,
             });

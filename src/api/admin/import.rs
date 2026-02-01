@@ -114,53 +114,56 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
         STORE.site_uv.clear();
         STORE.site_visitors.clear();
         STORE.page_pv.clear();
-        STORE.site_hosts.clear();
-        STORE.page_paths.clear();
+        STORE.new_visitors.write().unwrap().clear();
 
         // Load sites
-        let mut stmt = conn.prepare("SELECT hash, pv, uv, host FROM sites")?;
+        let mut stmt = conn.prepare("SELECT key, pv, uv FROM sites")?;
         let rows = stmt.query_map([], |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, i64>(1)?,
                 row.get::<_, i64>(2)?,
-                row.get::<_, Option<String>>(3)?,
             ))
         })?;
 
         for row in rows {
-            let (hash, pv, uv, host) = row?;
+            let (key, pv, uv) = row?;
             STORE
                 .site_pv
-                .insert(hash.clone(), AtomicU64::new(pv as u64));
+                .insert(key.clone(), AtomicU64::new(pv as u64));
             STORE
                 .site_uv
-                .insert(hash.clone(), AtomicU64::new(uv as u64));
-            STORE.site_visitors.insert(hash.clone(), DashSet::new());
-            if let Some(h) = host {
-                STORE.site_hosts.insert(hash, h);
+                .insert(key.clone(), AtomicU64::new(uv as u64));
+            STORE.site_visitors.insert(key, DashSet::new());
+        }
+
+        // Load visitors (if table exists)
+        let mut visitor_count = 0i64;
+        if let Ok(mut stmt) = conn.prepare("SELECT site_key, hash FROM visitors") {
+            if let Ok(rows) = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+            }) {
+                for row in rows.flatten() {
+                    let (site_key, hash) = row;
+                    let set = STORE.site_visitors.entry(site_key).or_default();
+                    set.insert(hash as u64);
+                    visitor_count += 1;
+                }
             }
         }
 
         // Load pages
-        let mut stmt = conn.prepare("SELECT key, pv, path FROM pages")?;
+        let mut stmt = conn.prepare("SELECT key, pv FROM pages")?;
         let rows = stmt.query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, i64>(1)?,
-                row.get::<_, Option<String>>(2)?,
-            ))
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
         })?;
 
         for row in rows {
-            let (key, pv, path) = row?;
-            STORE.page_pv.insert(key.clone(), AtomicU64::new(pv as u64));
-            if let Some(p) = path {
-                STORE.page_paths.insert(key, p);
-            }
+            let (key, pv) = row?;
+            STORE.page_pv.insert(key, AtomicU64::new(pv as u64));
         }
 
-        Ok::<(i64, i64), rusqlite::Error>((sites_count, pages_count))
+        Ok::<(i64, i64, i64), rusqlite::Error>((sites_count, pages_count, visitor_count))
     })
     .await;
 
@@ -168,7 +171,7 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
     let _ = tokio::fs::remove_file(temp_file).await;
 
     match result {
-        Ok(Ok((sites, pages))) => {
+        Ok(Ok((sites, pages, visitors))) => {
             // Trigger save to update the main database
             tokio::spawn(async {
                 if let Err(e) = state::save().await {
@@ -178,10 +181,11 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
 
             Json(json!({
                 "success": true,
-                "message": format!("导入成功: {} 站点, {} 页面", sites, pages),
+                "message": format!("导入成功: {} 站点, {} 页面, {} 访客", sites, pages, visitors),
                 "data": {
                     "sites": sites,
-                    "pages": pages
+                    "pages": pages,
+                    "visitors": visitors
                 }
             }))
         }

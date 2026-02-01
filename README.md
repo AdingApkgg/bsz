@@ -42,11 +42,7 @@ cp .env.example .env
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `WEB_ADDRESS` | 监听地址 | `0.0.0.0:8080` |
-| `WEB_CORS` | CORS 允许域 | `*` |
-| `BSZ_SECRET` | 签名密钥 | `bsz` |
-| `BSZ_ENCRYPT` | Hash 算法 | `MD516` |
-| `BSZ_PATH_STYLE` | 路径模式 | `true` |
+| `PORT` | 监听端口 | `8080` |
 | `ADMIN_TOKEN` | 管理密码 | _(空则禁用)_ |
 | `SAVE_INTERVAL` | 保存间隔(秒) | `30` |
 

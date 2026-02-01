@@ -1,94 +1,73 @@
-use crate::config::CONFIG;
+//! Visitor identity middleware using Cookie (compatible with original busuanzi)
+
 use axum::{
     body::Body,
-    http::{Request, Response},
+    http::{header, Request, Response},
     middleware::Next,
 };
-use sha1::{Digest, Sha1};
+
+const COOKIE_NAME: &str = "busuanziId";
 
 pub async fn identity_middleware(mut req: Request<Body>, next: Next) -> Response<Body> {
-    // Check Authorization
-    let token = req
+    // Check existing busuanziId cookie
+    let existing_id = req
         .headers()
-        .get("Authorization")
+        .get(header::COOKIE)
         .and_then(|h| h.to_str().ok())
-        .map(|s| s.replace("Bearer ", ""));
+        .and_then(|cookies| parse_cookie(cookies, COOKIE_NAME));
 
-    let mut user_identity = String::new();
-    let mut new_token = String::new();
-
-    if let Some(t) = token {
-        if let Some(uid) = check_token(&t) {
-            user_identity = uid;
-        }
-    }
-
-    if user_identity.is_empty() {
-        // Generate new identity
-        // Original: Md5(ClientIP + UserAgent)
+    let (user_identity, is_new) = if let Some(id) = existing_id {
+        // Use existing cookie value directly (compatible with original busuanzi)
+        (id, false)
+    } else {
+        // Generate new identity: MD5(IP + UserAgent), uppercase
         let ip = req
             .headers()
             .get("X-Forwarded-For")
             .or_else(|| req.headers().get("X-Real-IP"))
             .and_then(|h| h.to_str().ok())
-            .unwrap_or("127.0.0.1"); // Fallback
+            .and_then(|s| s.split(',').next()) // Take first IP if multiple
+            .unwrap_or("127.0.0.1")
+            .trim();
 
         let ua = req
             .headers()
-            .get("User-Agent")
+            .get(header::USER_AGENT)
             .and_then(|h| h.to_str().ok())
             .unwrap_or("");
 
         let raw = format!("{}{}", ip, ua);
-        user_identity = format!("{:x}", md5::compute(raw));
-        new_token = generate_token(&user_identity);
-    }
+        let id = format!("{:X}", md5::compute(raw)); // Uppercase hex like original
+        (id, true)
+    };
 
     req.extensions_mut().insert(user_identity.clone());
 
     let mut response = next.run(req).await;
 
-    // Expose Headers
-    response.headers_mut().insert(
-        "Access-Control-Expose-Headers",
-        "Set-Bsz-Identity".parse().unwrap(),
-    );
-
-    if !new_token.is_empty() {
-        response
-            .headers_mut()
-            .insert("Set-Bsz-Identity", new_token.parse().unwrap());
+    // Set cookie if new visitor
+    if is_new {
+        // Set cookie with long expiry, SameSite=None for cross-site requests
+        let cookie = format!(
+            "{}={}; Path=/; Max-Age=31536000; SameSite=None; Secure",
+            COOKIE_NAME, user_identity
+        );
+        if let Ok(value) = cookie.parse() {
+            response.headers_mut().insert(header::SET_COOKIE, value);
+        }
     }
 
     response
 }
 
-fn generate_token(identity: &str) -> String {
-    let secret = &CONFIG.bsz_secret;
-    let mut hasher = Sha1::new();
-    hasher.update(identity.as_bytes());
-    hasher.update(secret.as_bytes());
-    let sign = hex::encode(hasher.finalize());
-    format!("{}.{}", identity, sign)
-}
-
-fn check_token(token: &str) -> Option<String> {
-    let parts: Vec<&str> = token.split('.').collect();
-    if parts.len() != 2 {
-        return None;
+fn parse_cookie(cookies: &str, name: &str) -> Option<String> {
+    for cookie in cookies.split(';') {
+        let cookie = cookie.trim();
+        if let Some(value) = cookie.strip_prefix(name) {
+            if let Some(value) = value.strip_prefix('=') {
+                return Some(value.to_string());
+            }
+        }
     }
-    let identity = parts[0];
-    let sign = parts[1];
-
-    let secret = &CONFIG.bsz_secret;
-    let mut hasher = Sha1::new();
-    hasher.update(identity.as_bytes());
-    hasher.update(secret.as_bytes());
-    let calculated_sign = hex::encode(hasher.finalize());
-
-    if sign == calculated_sign {
-        Some(identity.to_string())
-    } else {
-        None
-    }
+    None
 }

@@ -16,8 +16,7 @@ pub struct ListKeysParams {
 
 #[derive(Debug, Serialize)]
 pub struct KeyInfo {
-    pub site_hash: String,
-    pub host: Option<String>,
+    pub site_key: String,
     pub site_pv: u64,
     pub site_uv: u64,
     pub page_count: usize,
@@ -38,26 +37,23 @@ pub async fn list_keys_handler(Query(params): Query<ListKeysParams>) -> impl Int
             break;
         }
 
-        let site_hash = entry.key().clone();
+        let site_key = entry.key().clone();
         let site_pv = entry.value().load(Ordering::Relaxed);
         let site_uv = STORE
             .site_uv
-            .get(&site_hash)
+            .get(&site_key)
             .map(|v| v.load(Ordering::Relaxed))
             .unwrap_or(0);
 
-        let prefix = format!("{}:", site_hash);
+        let prefix = format!("{}:", site_key);
         let page_count = STORE
             .page_pv
             .iter()
             .filter(|p| p.key().starts_with(&prefix))
             .count();
 
-        let host = STORE.site_hosts.get(&site_hash).map(|v| v.clone());
-
         keys.push(KeyInfo {
-            site_hash,
-            host,
+            site_key,
             site_pv,
             site_uv,
             page_count,
@@ -79,7 +75,7 @@ pub async fn list_keys_handler(Query(params): Query<ListKeysParams>) -> impl Int
 
 #[derive(Debug, Deserialize)]
 pub struct DeleteKeyParams {
-    pub site_hash: String,
+    pub site_key: String,
     pub page_key: Option<String>,
 }
 
@@ -88,7 +84,6 @@ pub async fn delete_key_handler(Query(params): Query<DeleteKeyParams>) -> impl I
     // If page_key is provided, delete single page; otherwise delete entire site
     if let Some(page_key) = &params.page_key {
         STORE.page_pv.remove(page_key);
-        STORE.page_paths.remove(page_key);
 
         return Json(json!({
             "success": true,
@@ -96,16 +91,14 @@ pub async fn delete_key_handler(Query(params): Query<DeleteKeyParams>) -> impl I
         }));
     }
 
-    let hash = &params.site_hash;
+    let key = &params.site_key;
 
-    STORE.site_pv.remove(hash);
-    STORE.site_uv.remove(hash);
-    STORE.site_visitors.remove(hash);
-    STORE.site_hosts.remove(hash);
+    STORE.site_pv.remove(key);
+    STORE.site_uv.remove(key);
+    STORE.site_visitors.remove(key);
 
-    let prefix = format!("{}:", hash);
+    let prefix = format!("{}:", key);
     STORE.page_pv.retain(|k, _| !k.starts_with(&prefix));
-    STORE.page_paths.retain(|k, _| !k.starts_with(&prefix));
 
     Json(json!({
         "success": true,
@@ -115,21 +108,21 @@ pub async fn delete_key_handler(Query(params): Query<DeleteKeyParams>) -> impl I
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateKeyParams {
-    pub site_hash: String,
+    pub site_key: String,
     pub key_type: String,
     pub value: Option<u64>,
 }
 
 /// POST /api/admin/keys/update
 pub async fn update_key_handler(Json(params): Json<UpdateKeyParams>) -> impl IntoResponse {
-    let hash = &params.site_hash;
+    let key = &params.site_key;
 
     match params.key_type.as_str() {
         "site_pv" => {
             if let Some(val) = params.value {
                 STORE
                     .site_pv
-                    .entry(hash.to_string())
+                    .entry(key.to_string())
                     .or_insert_with(|| AtomicU64::new(0))
                     .store(val, Ordering::Relaxed);
             }
@@ -138,15 +131,15 @@ pub async fn update_key_handler(Json(params): Json<UpdateKeyParams>) -> impl Int
             if let Some(val) = params.value {
                 STORE
                     .site_uv
-                    .entry(hash.to_string())
+                    .entry(key.to_string())
                     .or_insert_with(|| AtomicU64::new(0))
                     .store(val, Ordering::Relaxed);
             } else {
                 // Reset to 0 and clear visitors
-                if let Some(uv) = STORE.site_uv.get(hash) {
+                if let Some(uv) = STORE.site_uv.get(key) {
                     uv.store(0, Ordering::Relaxed);
                 }
-                if let Some(visitors) = STORE.site_visitors.get(hash) {
+                if let Some(visitors) = STORE.site_visitors.get(key) {
                     visitors.clear();
                 }
             }
