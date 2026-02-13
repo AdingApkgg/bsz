@@ -76,11 +76,13 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let conn = DB.lock().unwrap();
     let tx = conn.unchecked_transaction()?;
 
-    // Upsert sites
+    // Clear all tables and rewrite (ensures deletions are persisted)
+    tx.execute_batch("DELETE FROM sites; DELETE FROM pages; DELETE FROM visitors;")?;
+
+    // Write all sites
     {
         let mut stmt = tx.prepare_cached(
-            "INSERT INTO sites (key, pv, uv) VALUES (?1, ?2, ?3)
-             ON CONFLICT(key) DO UPDATE SET pv=?2, uv=?3",
+            "INSERT INTO sites (key, pv, uv) VALUES (?1, ?2, ?3)",
         )?;
 
         for entry in STORE.site_pv.iter() {
@@ -96,11 +98,10 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         }
     }
 
-    // Upsert pages
+    // Write all pages
     {
         let mut stmt = tx.prepare_cached(
-            "INSERT INTO pages (key, pv) VALUES (?1, ?2)
-             ON CONFLICT(key) DO UPDATE SET pv=?2",
+            "INSERT INTO pages (key, pv) VALUES (?1, ?2)",
         )?;
 
         for entry in STORE.page_pv.iter() {
@@ -111,18 +112,21 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         }
     }
 
-    // Insert new visitors (incremental)
+    // Write all visitors
     {
-        let mut new_visitors = STORE.new_visitors.write().unwrap();
-        if !new_visitors.is_empty() {
-            let mut stmt = tx.prepare_cached(
-                "INSERT OR IGNORE INTO visitors (site_key, hash) VALUES (?1, ?2)",
-            )?;
+        let mut stmt = tx.prepare_cached(
+            "INSERT INTO visitors (site_key, hash) VALUES (?1, ?2)",
+        )?;
 
-            for (site_key, hash) in new_visitors.drain(..) {
-                stmt.execute(params![site_key, hash as i64])?;
+        for entry in STORE.site_visitors.iter() {
+            let site_key = entry.key();
+            for vh in entry.value().iter() {
+                stmt.execute(params![site_key, *vh as i64])?;
             }
         }
+
+        // Clear incremental tracker
+        STORE.new_visitors.write().unwrap().clear();
     }
 
     tx.commit()?;

@@ -18,10 +18,17 @@ struct Assets;
 
 const STATIC_DIR: &str = "static";
 
-fn mime_type(path: &str) -> &'static str {
-    mime_guess::from_path(path)
+fn mime_type(path: &str) -> String {
+    let mime = mime_guess::from_path(path)
         .first_raw()
-        .unwrap_or("application/octet-stream")
+        .unwrap_or("application/octet-stream");
+
+    // Add charset=utf-8 for text types
+    if mime.starts_with("text/") || mime.contains("json") || mime.contains("xml") || mime.contains("javascript") {
+        format!("{}; charset=utf-8", mime)
+    } else {
+        mime.to_string()
+    }
 }
 
 /// Try to read from external static dir first, fallback to embedded

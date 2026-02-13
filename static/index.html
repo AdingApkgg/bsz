@@ -50,23 +50,22 @@
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --accent: #3b82f6; }
+    :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --accent: #3b82f6; --green: #22c55e; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
     .container { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
     h1 { font-size: 2rem; margin-bottom: 0.5rem; }
     .subtitle { color: var(--muted); margin-bottom: 2rem; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-    h2 { font-size: 1.125rem; margin-bottom: 1rem; }
-    p { color: var(--muted); margin-bottom: 1rem; }
-    pre { background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 0.875rem; }
+    h2 { font-size: 1.125rem; margin-bottom: 1rem; color: var(--text); }
+    h3 { font-size: 1rem; margin: 1.25rem 0 0.75rem; color: var(--muted); font-weight: 500; }
+    p { color: var(--muted); margin-bottom: 0.75rem; }
+    pre { background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 0.8125rem; line-height: 1.5; margin: 0.75rem 0; }
     code { color: #e5e5e5; }
-    .k { color: #c792ea; }
-    .s { color: #c3e88d; }
-    .c { color: #6b7280; }
-    .n { color: #f78c6c; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 500; }
+    .inline-code { background: rgba(59,130,246,0.15); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.8125rem; }
+    .k { color: #c792ea; } .s { color: #c3e88d; } .c { color: #545864; } .n { color: #f78c6c; } .f { color: #82aaff; } .t { color: #ffcb6b; }
+    table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+    th, td { text-align: left; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+    th { color: var(--muted); font-weight: 500; font-size: 0.8125rem; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
     footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem; }
@@ -74,17 +73,32 @@
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
     .stat-value { font-size: 2rem; font-weight: 600; color: var(--accent); }
     .stat-label { font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem; }
-    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0; }
-    .feature { padding: 0.75rem; background: rgba(59,130,246,0.1); border-radius: 8px; font-size: 0.875rem; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 0.75rem 0; }
+    .feature { padding: 0.75rem; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15); border-radius: 8px; font-size: 0.8125rem; text-align: center; }
+    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin-left: 0.5rem; }
+    .badge-post { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-get { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .badge-put { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .method-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+    .method-row:last-child { border-bottom: none; }
+    .method-path { font-family: ui-monospace, monospace; font-size: 0.8125rem; color: var(--text); min-width: 60px; }
+    .method-desc { color: var(--muted); }
+    .note { background: rgba(59,130,246,0.08); border-left: 3px solid var(--accent); padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 0.75rem 0; font-size: 0.8125rem; color: var(--muted); }
+    .note strong { color: var(--text); }
+    .step { counter-increment: step; position: relative; padding-left: 2rem; margin-bottom: 1rem; }
+    .step::before { content: counter(step); position: absolute; left: 0; width: 1.5rem; height: 1.5rem; background: var(--accent); color: white; border-radius: 50%; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .steps { counter-reset: step; }
     
-    /* Mobile responsive */
+    /* Artalk */
+    #artalk { margin-top: 0; }
+    .atk-main-editor { border-color: var(--border) !important; }
+    
     @media (max-width: 768px) {
       .container { padding: 2rem 1rem; }
       h1 { font-size: 1.5rem; }
-      .card { padding: 1rem; }
+      .card { padding: 1.25rem; }
       pre { font-size: 0.75rem; padding: 0.75rem; }
-      table { font-size: 0.875rem; }
-      th, td { padding: 0.5rem; }
+      .features { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 480px) {
       .container { padding: 1.5rem 0.75rem; }
@@ -122,10 +136,10 @@
     <section class="card">
       <h2>特性</h2>
       <div class="features">
-        <div class="feature">零外部依赖，单一二进制</div>
-        <div class="feature">内置 SQLite，数据持久化</div>
-        <div class="feature">高性能内存缓存</div>
-        <div class="feature">RESTful API 接口</div>
+        <div class="feature">零外部依赖</div>
+        <div class="feature">单一二进制</div>
+        <div class="feature">SQLite 持久化</div>
+        <div class="feature">内存级性能</div>
         <div class="feature">兼容原版 busuanzi</div>
         <div class="feature">完整管理后台</div>
       </div>
@@ -133,30 +147,31 @@
 
     <section class="card">
       <h2>API 接口</h2>
-      <table>
-        <thead>
-          <tr><th>方法</th><th>路径</th><th>说明</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>POST</td><td>/api</td><td>统计并返回 PV/UV</td></tr>
-          <tr><td>GET</td><td>/api</td><td>仅获取 PV/UV (不计数)</td></tr>
-          <tr><td>PUT</td><td>/api</td><td>仅提交统计 (不返回)</td></tr>
-          <tr><td>GET</td><td>/ping</td><td>健康检查</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="card">
-      <h2>请求头</h2>
-      <table>
-        <thead>
-          <tr><th>Header</th><th>必须</th><th>说明</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>x-bsz-referer</code></td><td>是</td><td>当前页面 URL</td></tr>
-        </tbody>
-      </table>
-      <p>访客身份通过 Cookie (<code>busuanziId</code>) 自动识别，与原版 busuanzi 兼容。</p>
+      <div class="method-row">
+        <span class="badge badge-post">POST</span>
+        <span class="method-path">/api</span>
+        <span class="method-desc">统计并返回 PV/UV</span>
+      </div>
+      <div class="method-row">
+        <span class="badge badge-get">GET</span>
+        <span class="method-path">/api</span>
+        <span class="method-desc">仅获取 PV/UV（不计数）</span>
+      </div>
+      <div class="method-row">
+        <span class="badge badge-put">PUT</span>
+        <span class="method-path">/api</span>
+        <span class="method-desc">仅提交统计（不返回）</span>
+      </div>
+      <div class="method-row">
+        <span class="badge badge-get">GET</span>
+        <span class="method-path">/ping</span>
+        <span class="method-desc">健康检查</span>
+      </div>
+      
+      <div class="note">
+        <strong>请求头：</strong>需携带 <code class="inline-code">x-bsz-referer</code> 为当前页面完整 URL。<br>
+        <strong>访客识别：</strong>通过 Cookie（<code class="inline-code">busuanziId</code>）自动管理，与原版 busuanzi 兼容。
+      </div>
     </section>
 
     <section class="card">
@@ -164,54 +179,99 @@
 <pre><code>{
   <span class="s">"success"</span>: <span class="k">true</span>,
   <span class="s">"data"</span>: {
-    <span class="s">"site_pv"</span>: <span class="n">1234</span>,  <span class="c">// 站点总访问量</span>
-    <span class="s">"site_uv"</span>: <span class="n">567</span>,   <span class="c">// 站点独立访客</span>
-    <span class="s">"page_pv"</span>: <span class="n">89</span>     <span class="c">// 当前页面访问量</span>
+    <span class="s">"site_pv"</span>: <span class="n">1234</span>,   <span class="c">// 站点总访问量</span>
+    <span class="s">"site_uv"</span>: <span class="n">567</span>,    <span class="c">// 站点独立访客数</span>
+    <span class="s">"page_pv"</span>: <span class="n">89</span>      <span class="c">// 当前页面访问量</span>
   }
 }</code></pre>
     </section>
 
     <section class="card">
-      <h2>快速开始</h2>
-<pre><code><span class="c">// 统计当前页面并获取数据</span>
-<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://{{HOST}}/api'</span>, {
+      <h2>快速接入</h2>
+      <p>只需几行代码即可为你的网站添加访客统计：</p>
+      <div class="steps">
+        <div class="step">
+          <strong>发送请求</strong>
+<pre><code><span class="k">const</span> res = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">'https://{{HOST}}/api'</span>, {
   method: <span class="s">'POST'</span>,
-  credentials: <span class="s">'include'</span>,  <span class="c">// 携带 Cookie</span>
+  credentials: <span class="s">'include'</span>,
   headers: { <span class="s">'x-bsz-referer'</span>: location.href }
-});
-
-<span class="k">const</span> { data } = <span class="k">await</span> res.json();
-console.log(<span class="s">'PV:'</span>, data.site_pv, <span class="s">'UV:'</span>, data.site_uv);</code></pre>
+});</code></pre>
+        </div>
+        <div class="step">
+          <strong>解析数据</strong>
+<pre><code><span class="k">const</span> { data } = <span class="k">await</span> res.<span class="f">json</span>();
+<span class="c">// data.site_pv  - 站点 PV</span>
+<span class="c">// data.site_uv  - 站点 UV</span>
+<span class="c">// data.page_pv  - 页面 PV</span></code></pre>
+        </div>
+        <div class="step">
+          <strong>展示数据</strong>
+<pre><code>document.<span class="f">getElementById</span>(<span class="s">'pv'</span>).textContent = data.site_pv;</code></pre>
+        </div>
+      </div>
     </section>
 
     <section class="card">
       <h2>完整示例</h2>
-<pre><code><span class="c">&lt;!-- 在页面中显示访问统计 --&gt;</span>
-&lt;p&gt;本站访问 &lt;span id=<span class="s">"pv"</span>&gt;-&lt;/span&gt; 次&lt;/p&gt;
+      <p>复制以下代码到你的 HTML 页面，修改域名即可使用：</p>
+<pre><code><span class="c">&lt;!-- 访客统计展示 --&gt;</span>
+&lt;p&gt;本站总访问 &lt;span id=<span class="s">"pv"</span>&gt;-&lt;/span&gt; 次，访客 &lt;span id=<span class="s">"uv"</span>&gt;-&lt;/span&gt; 人&lt;/p&gt;
+&lt;p&gt;本页访问 &lt;span id=<span class="s">"ppv"</span>&gt;-&lt;/span&gt; 次&lt;/p&gt;
 
 &lt;script&gt;
 (<span class="k">async</span> () =&gt; {
-  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://{{HOST}}/api'</span>, {
+  <span class="k">const</span> res = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">'https://{{HOST}}/api'</span>, {
     method: <span class="s">'POST'</span>,
     credentials: <span class="s">'include'</span>,
     headers: { <span class="s">'x-bsz-referer'</span>: location.href }
   });
-  
-  <span class="k">const</span> { data } = <span class="k">await</span> res.json();
-  document.getElementById(<span class="s">'pv'</span>).textContent = data.site_pv;
+  <span class="k">const</span> { success, data } = <span class="k">await</span> res.<span class="f">json</span>();
+  <span class="k">if</span> (success) {
+    document.<span class="f">getElementById</span>(<span class="s">'pv'</span>).textContent = data.site_pv;
+    document.<span class="f">getElementById</span>(<span class="s">'uv'</span>).textContent = data.site_uv;
+    document.<span class="f">getElementById</span>(<span class="s">'ppv'</span>).textContent = data.page_pv;
+  }
 })();
 &lt;/script&gt;</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>仅获取数据（不计数）</h2>
+      <p>使用 <code class="inline-code">GET</code> 方法可以获取统计数据但不增加计数，适用于管理页面或仪表盘：</p>
+<pre><code><span class="k">const</span> res = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">'https://{{HOST}}/api'</span>, {
+  headers: { <span class="s">'x-bsz-referer'</span>: <span class="s">'https://your-site.com/page'</span> }
+});
+<span class="k">const</span> { data } = <span class="k">await</span> res.<span class="f">json</span>();</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>静默统计</h2>
+      <p>使用 <code class="inline-code">PUT</code> 方法只提交访问记录不返回数据，适用于仅需记录不展示的场景：</p>
+<pre><code><span class="f">fetch</span>(<span class="s">'https://{{HOST}}/api'</span>, {
+  method: <span class="s">'PUT'</span>,
+  credentials: <span class="s">'include'</span>,
+  headers: { <span class="s">'x-bsz-referer'</span>: location.href }
+});</code></pre>
+    </section>
+
+    <section class="card" id="comments">
+      <h2>评论</h2>
+      <div id="artalk"></div>
     </section>
   </main>
 
   <footer>
     <nav>
       <a href="https://github.com/AdingApkgg/bsz" rel="noopener">GitHub</a> · 
-      <a href="/admin">管理面板</a>
+      <a href="/admin">管理面板</a> · 
+      <a href="/llms.txt">AI 文档</a> · 
+      <a href="/sitemap.xml">站点地图</a>
     </nav>
-    <p style="margin-top:0.5rem">Powered by Rust + Axum + SQLite</p>
+    <p style="margin-top:0.5rem">Powered by Rust</p>
   </footer>
 
+  <!-- 统计脚本 -->
   <script>
     (async () => {
       try {
@@ -228,6 +288,19 @@ console.log(<span class="s">'PV:'</span>, data.site_pv, <span class="s">'UV:'</s
         }
       } catch (e) {}
     })();
+  </script>
+
+  <!-- Artalk 评论 -->
+  <link rel="stylesheet" href="https://artalk.saop.cc/dist/Artalk.css">
+  <script src="https://artalk.saop.cc/dist/Artalk.js"></script>
+  <script>
+    Artalk.init({
+      el: '#artalk',
+      pageKey: 'https://bsz.saop.cc/',
+      site: '不蒜子.rs',
+      server: 'https://artalk.saop.cc',
+      darkMode: true,
+    });
   </script>
 </body>
 </html>
