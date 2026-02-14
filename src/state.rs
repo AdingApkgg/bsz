@@ -60,16 +60,71 @@ fn init_db(conn: &Connection) -> rusqlite::Result<()> {
             PRIMARY KEY (site_key, hash)
         );
         CREATE INDEX IF NOT EXISTS idx_visitors_site ON visitors(site_key);
+        CREATE TABLE IF NOT EXISTS operation_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            action TEXT NOT NULL,
+            detail TEXT NOT NULL DEFAULT '',
+            ip TEXT NOT NULL DEFAULT ''
+        );
         ",
     )?;
     Ok(())
 }
 
-/// Save store to SQLite
+/// Add an operation log entry
+pub fn add_log(action: &str, detail: &str, ip: &str) {
+    let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    if let Ok(conn) = DB.lock() {
+        let _ = conn.execute(
+            "INSERT INTO operation_logs (timestamp, action, detail, ip) VALUES (?1, ?2, ?3, ?4)",
+            params![now, action, detail, ip],
+        );
+    }
+}
+
+/// A single operation log entry: (id, timestamp, action, detail, ip)
+pub type LogEntry = (i64, String, String, String, String);
+
+/// Query operation logs with pagination
+pub fn query_logs(
+    page: usize,
+    size: usize,
+) -> Result<(Vec<LogEntry>, usize), Box<dyn std::error::Error>> {
+    let conn = DB.lock().unwrap();
+    let total: i64 = conn.query_row("SELECT COUNT(*) FROM operation_logs", [], |r| {
+        r.get::<_, i64>(0)
+    })?;
+    let total = total as usize;
+
+    let offset = (page.saturating_sub(1)) * size;
+    let mut stmt = conn.prepare(
+        "SELECT id, timestamp, action, detail, ip FROM operation_logs ORDER BY id DESC LIMIT ?1 OFFSET ?2",
+    )?;
+    let rows = stmt
+        .query_map(params![size as i64, offset as i64], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+            ))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok((rows, total))
+}
+
+/// Save store to SQLite (async wrapper)
 pub async fn save() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Run in blocking task since rusqlite is sync
     tokio::task::spawn_blocking(save_sync).await??;
     Ok(())
+}
+
+/// Save store to SQLite (blocking, for use inside spawn_blocking)
+pub fn save_blocking() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    save_sync()
 }
 
 fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -81,9 +136,7 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // Write all sites
     {
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO sites (key, pv, uv) VALUES (?1, ?2, ?3)",
-        )?;
+        let mut stmt = tx.prepare_cached("INSERT INTO sites (key, pv, uv) VALUES (?1, ?2, ?3)")?;
 
         for entry in STORE.site_pv.iter() {
             let key = entry.key();
@@ -100,9 +153,7 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // Write all pages
     {
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO pages (key, pv) VALUES (?1, ?2)",
-        )?;
+        let mut stmt = tx.prepare_cached("INSERT INTO pages (key, pv) VALUES (?1, ?2)")?;
 
         for entry in STORE.page_pv.iter() {
             let key = entry.key();
@@ -114,9 +165,8 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // Write all visitors
     {
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO visitors (site_key, hash) VALUES (?1, ?2)",
-        )?;
+        let mut stmt =
+            tx.prepare_cached("INSERT INTO visitors (site_key, hash) VALUES (?1, ?2)")?;
 
         for entry in STORE.site_visitors.iter() {
             let site_key = entry.key();
@@ -140,6 +190,129 @@ fn save_sync() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     Ok(())
 }
 
+/// Atomically import data from an external SQLite file.
+/// Holds DB lock during entire operation to prevent races with background save.
+/// Returns (sites_count, pages_count, visitors_count).
+pub fn import_from_file(
+    temp_path: &str,
+) -> Result<(i64, i64, i64), Box<dyn std::error::Error + Send + Sync>> {
+    // Lock main DB first — blocks background save_sync
+    let conn = DB.lock().unwrap();
+
+    // Open uploaded temp database
+    let temp_conn =
+        Connection::open(temp_path).map_err(|e| format!("打开临时数据库失败: {}", e))?;
+
+    // Read counts
+    let sites_count: i64 = temp_conn
+        .query_row("SELECT COUNT(*) FROM sites", [], |r| r.get(0))
+        .map_err(|e| format!("读取 sites 表失败: {}", e))?;
+    let pages_count: i64 = temp_conn
+        .query_row("SELECT COUNT(*) FROM pages", [], |r| r.get(0))
+        .map_err(|e| format!("读取 pages 表失败: {}", e))?;
+
+    // ---- Clear STORE ----
+    STORE.site_pv.clear();
+    STORE.site_uv.clear();
+    STORE.site_visitors.clear();
+    STORE.page_pv.clear();
+    STORE.new_visitors.write().unwrap().clear();
+
+    // ---- Load from temp into STORE ----
+    // Sites
+    {
+        let mut stmt = temp_conn.prepare("SELECT key, pv, uv FROM sites")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, i64>(2)?,
+            ))
+        })?;
+        for row in rows {
+            let (key, pv, uv) = row?;
+            STORE.site_pv.insert(key.clone(), AtomicU64::new(pv as u64));
+            STORE.site_uv.insert(key.clone(), AtomicU64::new(uv as u64));
+            STORE.site_visitors.insert(key, dashmap::DashSet::new());
+        }
+    }
+
+    // Visitors (optional table in older exports)
+    let mut visitor_count = 0i64;
+    if let Ok(mut stmt) = temp_conn.prepare("SELECT site_key, hash FROM visitors") {
+        if let Ok(rows) = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        }) {
+            for row in rows.flatten() {
+                let (site_key, hash) = row;
+                let set = STORE.site_visitors.entry(site_key).or_default();
+                set.insert(hash as u64);
+                visitor_count += 1;
+            }
+        }
+    }
+
+    // Pages
+    {
+        let mut stmt = temp_conn.prepare("SELECT key, pv FROM pages")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        })?;
+        for row in rows {
+            let (key, pv) = row?;
+            STORE.page_pv.insert(key, AtomicU64::new(pv as u64));
+        }
+    }
+
+    drop(temp_conn);
+
+    // ---- Persist to main DB immediately (still holding lock) ----
+    let tx = conn.unchecked_transaction()?;
+    tx.execute_batch("DELETE FROM sites; DELETE FROM pages; DELETE FROM visitors;")?;
+
+    {
+        let mut stmt = tx.prepare_cached("INSERT INTO sites (key, pv, uv) VALUES (?1, ?2, ?3)")?;
+        for entry in STORE.site_pv.iter() {
+            let key = entry.key();
+            let pv = entry.value().load(Ordering::Relaxed);
+            let uv = STORE
+                .site_uv
+                .get(key)
+                .map(|v| v.load(Ordering::Relaxed))
+                .unwrap_or(0);
+            stmt.execute(params![key, pv as i64, uv as i64])?;
+        }
+    }
+    {
+        let mut stmt = tx.prepare_cached("INSERT INTO pages (key, pv) VALUES (?1, ?2)")?;
+        for entry in STORE.page_pv.iter() {
+            let key = entry.key();
+            let pv = entry.value().load(Ordering::Relaxed);
+            stmt.execute(params![key, pv as i64])?;
+        }
+    }
+    {
+        let mut stmt =
+            tx.prepare_cached("INSERT INTO visitors (site_key, hash) VALUES (?1, ?2)")?;
+        for entry in STORE.site_visitors.iter() {
+            let site_key = entry.key();
+            for vh in entry.value().iter() {
+                stmt.execute(params![site_key, *vh as i64])?;
+            }
+        }
+    }
+
+    tx.commit()?;
+
+    tracing::info!(
+        "Imported {} sites, {} pages, {} visitors",
+        sites_count,
+        pages_count,
+        visitor_count
+    );
+    Ok((sites_count, pages_count, visitor_count))
+}
+
 /// Load store from SQLite
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB.lock().unwrap();
@@ -157,12 +330,8 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
 
         for row in rows {
             let (key, pv, uv) = row?;
-            STORE
-                .site_pv
-                .insert(key.clone(), AtomicU64::new(pv as u64));
-            STORE
-                .site_uv
-                .insert(key.clone(), AtomicU64::new(uv as u64));
+            STORE.site_pv.insert(key.clone(), AtomicU64::new(pv as u64));
+            STORE.site_uv.insert(key.clone(), AtomicU64::new(uv as u64));
             STORE.site_visitors.insert(key, DashSet::new());
         }
     }
@@ -238,10 +407,7 @@ pub fn incr_site(site_key: &str, user_identity: &str) -> (u64, u64) {
         + 1;
 
     let vh = visitor_hash(user_identity);
-    let visitors = STORE
-        .site_visitors
-        .entry(site_key.to_string())
-        .or_default();
+    let visitors = STORE.site_visitors.entry(site_key.to_string()).or_default();
 
     let is_new = visitors.insert(vh);
 

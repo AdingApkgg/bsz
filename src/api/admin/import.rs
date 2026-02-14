@@ -2,56 +2,73 @@
 
 use axum::body::Body;
 use axum::extract::Multipart;
-use axum::http::header;
+use axum::http::{header, HeaderMap};
 use axum::response::{IntoResponse, Json, Response};
-use dashmap::DashSet;
-use rusqlite::Connection;
 use serde_json::json;
-use std::sync::atomic::AtomicU64;
 
-use crate::state::{self, STORE};
+use crate::state;
+
+fn client_ip(headers: &HeaderMap) -> String {
+    headers
+        .get("X-Forwarded-For")
+        .or_else(|| headers.get("X-Real-IP"))
+        .and_then(|h| h.to_str().ok())
+        .and_then(|s| s.split(',').next())
+        .unwrap_or("unknown")
+        .trim()
+        .to_string()
+}
 
 const DB_FILE: &str = "data.db";
 
 /// GET /api/admin/export - Download data.db file
-pub async fn export_handler() -> impl IntoResponse {
-    // Save current data first
-    if let Err(e) = state::save().await {
-        return Response::builder()
+pub async fn export_handler(headers: HeaderMap) -> impl IntoResponse {
+    let ip = client_ip(&headers);
+
+    // Save current data first, then read file — all synchronous to avoid races
+    let result = tokio::task::spawn_blocking(|| -> Result<Vec<u8>, String> {
+        state::save_blocking().map_err(|e| format!("保存失败: {}", e))?;
+        std::fs::read(DB_FILE).map_err(|e| format!("读取失败: {}", e))
+    })
+    .await;
+
+    match result {
+        Ok(Ok(data)) => {
+            state::add_log("export", "导出数据库", &ip);
+            Response::builder()
+                .status(200)
+                .header(header::CONTENT_TYPE, "application/x-sqlite3")
+                .header(
+                    header::CONTENT_DISPOSITION,
+                    format!(
+                        "attachment; filename=\"busuanzi-{}.db\"",
+                        chrono::Local::now().format("%Y%m%d-%H%M%S")
+                    ),
+                )
+                .body(Body::from(data))
+                .unwrap()
+        }
+        Ok(Err(msg)) => Response::builder()
             .status(500)
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(
-                json!({"success": false, "message": format!("保存失败: {}", e)}).to_string(),
+                json!({"success": false, "message": msg}).to_string(),
             ))
-            .unwrap();
-    }
-
-    // Read database file
-    match tokio::fs::read(DB_FILE).await {
-        Ok(data) => Response::builder()
-            .status(200)
-            .header(header::CONTENT_TYPE, "application/x-sqlite3")
-            .header(
-                header::CONTENT_DISPOSITION,
-                format!(
-                    "attachment; filename=\"busuanzi-{}.db\"",
-                    chrono::Local::now().format("%Y%m%d-%H%M%S")
-                ),
-            )
-            .body(Body::from(data))
             .unwrap(),
         Err(e) => Response::builder()
             .status(500)
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(
-                json!({"success": false, "message": format!("读取失败: {}", e)}).to_string(),
+                json!({"success": false, "message": format!("内部错误: {}", e)}).to_string(),
             ))
             .unwrap(),
     }
 }
 
 /// POST /api/admin/import - Upload and replace data.db file
-pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
+pub async fn import_handler(headers: HeaderMap, mut multipart: Multipart) -> impl IntoResponse {
+    let ip = client_ip(&headers);
+
     // Get uploaded file
     let mut db_data: Option<Vec<u8>> = None;
 
@@ -90,7 +107,7 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
         }));
     }
 
-    // Write to temp file first
+    // Write to temp file
     let temp_file = "data.db.import";
     if let Err(e) = tokio::fs::write(temp_file, &data).await {
         return Json(json!({
@@ -99,85 +116,19 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
         }));
     }
 
-    // Load and validate the database
-    let result = tokio::task::spawn_blocking(move || {
-        let conn = Connection::open(temp_file)?;
-
-        // Check tables exist
-        let sites_count: i64 =
-            conn.query_row("SELECT COUNT(*) FROM sites", [], |row| row.get(0))?;
-        let pages_count: i64 =
-            conn.query_row("SELECT COUNT(*) FROM pages", [], |row| row.get(0))?;
-
-        // Clear current store
-        STORE.site_pv.clear();
-        STORE.site_uv.clear();
-        STORE.site_visitors.clear();
-        STORE.page_pv.clear();
-        STORE.new_visitors.write().unwrap().clear();
-
-        // Load sites
-        let mut stmt = conn.prepare("SELECT key, pv, uv FROM sites")?;
-        let rows = stmt.query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, i64>(1)?,
-                row.get::<_, i64>(2)?,
-            ))
-        })?;
-
-        for row in rows {
-            let (key, pv, uv) = row?;
-            STORE
-                .site_pv
-                .insert(key.clone(), AtomicU64::new(pv as u64));
-            STORE
-                .site_uv
-                .insert(key.clone(), AtomicU64::new(uv as u64));
-            STORE.site_visitors.insert(key, DashSet::new());
-        }
-
-        // Load visitors (if table exists)
-        let mut visitor_count = 0i64;
-        if let Ok(mut stmt) = conn.prepare("SELECT site_key, hash FROM visitors") {
-            if let Ok(rows) = stmt.query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
-            }) {
-                for row in rows.flatten() {
-                    let (site_key, hash) = row;
-                    let set = STORE.site_visitors.entry(site_key).or_default();
-                    set.insert(hash as u64);
-                    visitor_count += 1;
-                }
-            }
-        }
-
-        // Load pages
-        let mut stmt = conn.prepare("SELECT key, pv FROM pages")?;
-        let rows = stmt.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
-        })?;
-
-        for row in rows {
-            let (key, pv) = row?;
-            STORE.page_pv.insert(key, AtomicU64::new(pv as u64));
-        }
-
-        Ok::<(i64, i64, i64), rusqlite::Error>((sites_count, pages_count, visitor_count))
-    })
-    .await;
+    // Atomically import: load into STORE + persist to main DB (holds DB lock)
+    let result = tokio::task::spawn_blocking(move || state::import_from_file(temp_file)).await;
 
     // Clean up temp file
     let _ = tokio::fs::remove_file(temp_file).await;
 
     match result {
         Ok(Ok((sites, pages, visitors))) => {
-            // Trigger save to update the main database
-            tokio::spawn(async {
-                if let Err(e) = state::save().await {
-                    tracing::error!("Failed to save after import: {}", e);
-                }
-            });
+            state::add_log(
+                "import",
+                &format!("{} sites, {} pages, {} visitors", sites, pages, visitors),
+                &ip,
+            );
 
             Json(json!({
                 "success": true,
@@ -191,11 +142,11 @@ pub async fn import_handler(mut multipart: Multipart) -> impl IntoResponse {
         }
         Ok(Err(e)) => Json(json!({
             "success": false,
-            "message": format!("数据库读取错误: {}", e)
+            "message": format!("导入失败: {}", e)
         })),
         Err(e) => Json(json!({
             "success": false,
-            "message": format!("导入失败: {}", e)
+            "message": format!("内部错误: {}", e)
         })),
     }
 }

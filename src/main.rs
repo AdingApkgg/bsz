@@ -5,6 +5,7 @@ mod middleware;
 mod state;
 mod static_files;
 
+use axum::http::{header, HeaderName, Method};
 use axum::{
     middleware as axum_middleware,
     routing::{delete, get, post, put},
@@ -12,7 +13,6 @@ use axum::{
 };
 use std::net::SocketAddr;
 use std::time::Duration;
-use axum::http::{header, HeaderName, Method};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
@@ -50,8 +50,18 @@ async fn main() {
     // CORS - support credentials for Cookie auth
     let cors_layer = CorsLayer::new()
         .allow_origin(tower_http::cors::AllowOrigin::mirror_request())
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, HeaderName::from_static("x-bsz-referer")])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            HeaderName::from_static("x-bsz-referer"),
+        ])
         .allow_credentials(true)
         .expose_headers([header::SET_COOKIE]);
 
@@ -62,9 +72,18 @@ async fn main() {
         .route("/keys/update", post(api::admin::update_key_handler))
         .route("/keys/rename", post(api::admin::rename_key_handler))
         .route("/keys/merge", post(api::admin::merge_key_handler))
+        .route(
+            "/keys/batch-delete",
+            post(api::admin::batch_delete_keys_handler),
+        )
         .route("/pages", get(api::admin::list_pages_handler))
         .route("/pages/update", post(api::admin::update_page_handler))
+        .route(
+            "/pages/batch-delete",
+            post(api::admin::batch_delete_pages_handler),
+        )
         .route("/stats", get(api::admin::stats_handler))
+        .route("/logs", get(api::admin::logs_handler))
         .route("/export", get(api::admin::export_handler))
         .route("/import", post(api::admin::import_handler))
         .route("/sync", get(api::admin::sync_handler))

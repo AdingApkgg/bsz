@@ -1,878 +1,840 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Busuanzi Admin</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busuanzi Admin</title>
+  <link rel="stylesheet" href="/static/vendor/tailwind-reset.min.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; --muted: #71717a; --accent: #3b82f6; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
-    
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
-    .header h1 { font-size: 1.25rem; font-weight: 600; }
-    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-    
-    .auth { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; max-width: 360px; margin: 6rem auto; }
-    .auth h2 { margin-bottom: 1rem; font-size: 1.25rem; }
-    .auth input { width: 100%; padding: 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); margin-bottom: 1rem; }
-    .auth input:focus { outline: none; border-color: var(--accent); }
-    
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
-    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-    .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
-    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    
-    .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
-    .search { flex: 1; min-width: 200px; padding: 0.625rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
-    .search:focus { outline: none; border-color: var(--accent); }
-    .search::placeholder { color: var(--muted); }
-    .toolbar-right { display: flex; gap: 0.5rem; align-items: center; }
-    .sort-select { padding: 0.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.875rem; }
-    
-    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
-    th { font-weight: 500; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.02); cursor: pointer; user-select: none; }
-    th:hover { color: var(--text); }
-    th.sorted { color: var(--accent); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
-    .hash { font-family: ui-monospace, monospace; font-size: 0.8rem; color: var(--muted); cursor: pointer; }
-    .hash:hover { color: var(--text); }
-    .num { font-variant-numeric: tabular-nums; }
-    .actions { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-    .empty { text-align: center; padding: 3rem; color: var(--muted); }
-    
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-      .table-wrap { overflow-x: auto; }
-      table { min-width: 600px; }
-      th, td { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-      .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
-      .header h1 { font-size: 1.1rem; }
-      .toolbar { flex-direction: column; align-items: stretch; }
-      .search { min-width: auto; }
-      .toolbar-right { justify-content: space-between; }
-    }
-    @media (max-width: 480px) {
-      .container { padding: 1rem 0.75rem; }
-      .stat { padding: 0.75rem; }
-      .stat-value { font-size: 1.25rem; }
-      .modal-content { width: 95%; margin: 0.5rem; }
-      .modal-body { padding: 1rem; }
-      .form-row { grid-template-columns: 1fr; }
-      .toast { left: 1rem; right: 1rem; bottom: 1rem; }
-    }
-    
-    .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.375rem; }
-    .btn:hover { opacity: 0.85; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-warning { background: var(--warning); color: black; }
-    .btn-ghost { background: transparent; color: var(--muted); padding: 0.375rem 0.625rem; }
-    .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
-    
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; z-index: 100; }
-    .modal.show { display: flex; }
-    .modal.modal-top { z-index: 150; }
-    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h3 { font-size: 1rem; font-weight: 500; }
-    .modal-body { padding: 1.25rem; }
-    .modal-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
-    
-    .form-group { margin-bottom: 1rem; }
-    .form-group:last-child { margin-bottom: 0; }
-    .form-group label { display: block; font-size: 0.875rem; color: var(--muted); margin-bottom: 0.375rem; }
-    .form-group input, .form-group select { width: 100%; padding: 0.625rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
-    .form-group input:read-only { opacity: 0.6; cursor: not-allowed; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .help { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
-    
-    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--card); border: 1px solid var(--border); padding: 0.75rem 1.25rem; border-radius: 8px; display: none; z-index: 200; }
-    .toast.show { display: block; animation: slideIn 0.2s; }
-    .toast.error { border-color: var(--danger); color: var(--danger); }
-    .toast.success { border-color: var(--success); color: var(--success); }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    
-    .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); }
-    
-    .hidden { display: none !important; }
-    
-    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
-    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+    [un-cloak]{display:none}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .anim-slide{animation:slideUp .2s ease}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:.75rem 1rem;border-bottom:1px solid #27272a}
+    th{font-weight:500;color:#71717a;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;background:rgba(255,255,255,.02);user-select:none}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.02)}
+    .fi{width:100%;padding:.625rem;background:#09090b;border:1px solid #27272a;border-radius:6px;color:#fafafa;outline:none}
+    .fi:focus{border-color:#3b82f6}
+    .fi[readonly]{opacity:.6;cursor:not-allowed}
+    .pbar{height:8px;background:#27272a;border-radius:4px;overflow:hidden;margin-bottom:.5rem}
+    .pfill{height:100%;background:#3b82f6;transition:width .3s}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#27272a;border-radius:2px}
+    .ck{appearance:none;width:16px;height:16px;border:1px solid #52525b;border-radius:3px;background:transparent;cursor:pointer;vertical-align:middle;position:relative;flex-shrink:0}
+    .ck:checked{background:#3b82f6;border-color:#3b82f6}
+    .ck:checked::after{content:'✓';position:absolute;top:-1px;left:2px;font-size:11px;color:#fff}
   </style>
+  <script src="/static/vendor/unocss-runtime.js"></script>
 </head>
-<body>
-  <div id="auth" class="auth hidden">
-    <h2>管理面板</h2>
-    <input type="password" id="token-input" placeholder="输入 Admin Token" onkeydown="if(event.key==='Enter')login()">
-    <button class="btn btn-primary" style="width:100%" onclick="login()">登录</button>
-  </div>
+<body class="bg-zinc-950 text-zinc-50 font-sans min-h-screen leading-relaxed" x-data="app()" @keydown.escape="closeAllModals()" un-cloak>
 
-  <div id="main" class="container hidden">
-    <div class="header">
-      <h1>Busuanzi Admin</h1>
-      <div class="header-actions">
-        <button class="btn btn-primary" onclick="openImport()">导入</button>
-        <button class="btn btn-ghost" onclick="exportData()">导出</button>
-        <button class="btn btn-ghost" onclick="logout()">登出</button>
-      </div>
+  <!-- Toast -->
+  <template x-if="toast.show">
+    <div class="fixed bottom-6 right-6 bg-zinc-900 border border-zinc-800 px-5 py-3 rounded-lg z-200 anim-slide"
+         :class="toast.type==='error'?'border-red-500! text-red-500':'border-green-500! text-green-500'"
+         x-text="toast.msg" x-init="setTimeout(()=>toast.show=false,2500)"></div>
+  </template>
+
+  <!-- Auth -->
+  <template x-if="!authed">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-8 max-w-sm mx-auto mt-24">
+      <h2 class="mb-4 text-xl font-semibold">管理面板</h2>
+      <input type="password" class="fi mb-4" placeholder="输入 Admin Token" x-model="tokenInput" @keydown.enter="login()">
+      <button class="w-full py-2.5 bg-blue-500 text-white rounded-md text-sm font-medium cursor-pointer hover:opacity-85 transition" @click="login()">登录</button>
     </div>
+  </template>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-value" id="stat-sites">-</div>
-        <div class="stat-label">站点</div>
-                </div>
-      <div class="stat">
-        <div class="stat-value" id="stat-pages">-</div>
-        <div class="stat-label">页面</div>
-                </div>
-      <div class="stat">
-        <div class="stat-value" id="stat-pv">-</div>
-                    <div class="stat-label">总 PV</div>
-                </div>
-      <div class="stat">
-        <div class="stat-value" id="stat-uv">-</div>
-                    <div class="stat-label">总 UV</div>
-                </div>
-            </div>
+  <!-- Main -->
+  <template x-if="authed">
+    <div class="max-w-[1100px] mx-auto p-6 px-4 lt-sm:px-3 lt-sm:p-4">
 
-    <div class="toolbar">
-      <input type="text" class="search" id="search" placeholder="搜索站点域名..." oninput="filterKeys()">
-      <div class="toolbar-right">
-        <select class="sort-select" id="sort" onchange="filterKeys()">
-          <option value="pv-desc">PV 降序</option>
-          <option value="pv-asc">PV 升序</option>
-          <option value="uv-desc">UV 降序</option>
-          <option value="uv-asc">UV 升序</option>
-          <option value="key-asc">域名 A-Z</option>
-        </select>
-      </div>
-            </div>
-            
-    <div class="table-wrap">
-      <table>
-                <thead>
-                    <tr>
-            <th style="width:30%">域名</th>
-            <th>PV</th>
-            <th>UV</th>
-            <th>页面</th>
-            <th style="width:200px">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="keys-body">
-          <tr><td colspan="5" class="empty">加载中...</td></tr>
-                </tbody>
-            </table>
-      <div class="status-bar">
-        <span id="status-count">-</span>
-        <span id="status-time">-</span>
-      </div>
-    </div>
-            </div>
-
-  <div id="edit-modal" class="modal" onclick="if(event.target===this)closeModal('edit-modal')">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>编辑站点数据</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>站点域名</label>
-                        <input type="text" id="edit-key" readonly>
-                    </div>
-        <div class="form-row">
-                    <div class="form-group">
-                        <label>Site PV</label>
-            <input type="number" id="edit-pv" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Site UV</label>
-            <input type="number" id="edit-uv" min="0">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('edit-modal')">取消</button>
-                    <button class="btn btn-primary" onclick="saveEdit()">保存</button>
-                </div>
-            </div>
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+        <h1 class="text-xl font-semibold lt-md:text-lg">Busuanzi Admin</h1>
+        <div class="flex gap-2 items-center flex-wrap">
+          <!-- Auto-refresh -->
+          <div class="flex items-center gap-1.5 text-sm">
+            <select class="fi !w-auto !py-1 !px-2 !bg-zinc-900 !border-zinc-800 !text-xs" x-model="autoRefreshInterval" @change="toggleAutoRefresh()">
+              <option value="0">手动刷新</option>
+              <option value="10">10s</option>
+              <option value="30">30s</option>
+              <option value="60">60s</option>
+            </select>
+            <span class="text-zinc-500 text-xs tabular-nums" x-show="autoRefreshInterval>0" x-text="countdown+'s'"></span>
+          </div>
+          <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="modal='import'">导入</button>
+          <button class="px-2.5 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="doExport()">导出</button>
+          <button class="px-2.5 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="modal='logs'">日志</button>
+          <button class="px-2.5 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="logout()">登出</button>
         </div>
+      </div>
 
-  <div id="rename-modal" class="modal" onclick="if(event.target===this)closeModal('rename-modal')">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>重命名站点</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('rename-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>原域名</label>
-          <input type="text" id="rename-old" readonly>
+      <!-- Stats -->
+      <div class="grid grid-cols-4 lt-md:grid-cols-2 lt-sm:grid-cols-1 gap-4 mb-6">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-2xl font-semibold text-blue-500 lt-sm:text-xl" x-text="fmt(stats.total_sites)"></div>
+          <div class="text-xs text-zinc-500 uppercase tracking-wide">站点</div>
         </div>
-        <div class="form-group">
-          <label>新域名</label>
-          <input type="text" id="rename-new" placeholder="example.com">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-2xl font-semibold text-blue-500 lt-sm:text-xl" x-text="fmt(stats.total_pages)"></div>
+          <div class="text-xs text-zinc-500 uppercase tracking-wide">页面</div>
         </div>
-        <p class="help">用于网站更换域名后保留统计数据</p>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-2xl font-semibold text-blue-500 lt-sm:text-xl" x-text="fmt(stats.total_site_pv)"></div>
+          <div class="text-xs text-zinc-500 uppercase tracking-wide">总 PV</div>
+        </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-2xl font-semibold text-blue-500 lt-sm:text-xl" x-text="fmt(stats.total_site_uv)"></div>
+          <div class="text-xs text-zinc-500 uppercase tracking-wide">总 UV</div>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('rename-modal')">取消</button>
-        <button class="btn btn-primary" onclick="confirmRename()">重命名</button>
-      </div>
-    </div>
-  </div>
 
-  <div id="merge-modal" class="modal" onclick="if(event.target===this)closeModal('merge-modal')">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>合并站点数据</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('merge-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>源站点（将被删除）</label>
-          <input type="text" id="merge-source" readonly>
+      <!-- Charts -->
+      <div class="grid grid-cols-2 lt-md:grid-cols-1 gap-4 mb-6" x-show="allKeys.length>0">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-xs text-zinc-500 uppercase tracking-wide mb-3">TOP 10 站点 (PV)</div>
+          <div style="height:250px"><canvas x-ref="barChart"></canvas></div>
         </div>
-        <div class="form-group">
-          <label>目标站点（保留）</label>
-          <input type="text" id="merge-target" placeholder="example.com">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <div class="text-xs text-zinc-500 uppercase tracking-wide mb-3">PV 分布</div>
+          <div style="height:250px"><canvas x-ref="doughnutChart"></canvas></div>
         </div>
-        <p class="help">将源站点的 PV 累加到目标站点，UV 取较大值，页面数据合并</p>
-        <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 合并后源站点将被删除！</p>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('merge-modal')">取消</button>
-        <button class="btn btn-warning" onclick="confirmMerge()">合并</button>
-      </div>
-    </div>
-  </div>
 
-  <div id="delete-modal" class="modal modal-top" onclick="if(event.target===this)closeModal('delete-modal')">
-    <div class="modal-content">
-                <div class="modal-header">
-                    <h3>确认删除</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('delete-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-        <p>确定删除 <code id="delete-key" style="color:var(--accent)"></code> 的所有数据？</p>
-        <p style="color:var(--danger);margin-top:0.75rem;font-size:0.875rem">⚠ 此操作不可恢复！</p>
-                </div>
-                <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('delete-modal')">取消</button>
-                    <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
-                </div>
-            </div>
-  </div>
-
-  <div id="pages-modal" class="modal" onclick="if(event.target===this)closeModal('pages-modal')">
-    <div class="modal-content" style="max-width:700px">
-      <div class="modal-header">
-        <h3>页面列表 - <code id="pages-site-key" style="font-size:0.8rem"></code></h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('pages-modal')">✕</button>
+      <!-- Toolbar -->
+      <div class="flex gap-3 mb-4 flex-wrap items-center lt-md:flex-col lt-md:items-stretch">
+        <input type="text" class="fi flex-1 min-w-[200px] lt-md:min-w-0 !bg-zinc-900 !border-zinc-800" placeholder="搜索站点域名..." x-model="search">
+        <div class="flex gap-2 items-center lt-md:justify-between">
+          <select class="fi !w-auto !bg-zinc-900 !border-zinc-800 !text-sm" x-model="sort">
+            <option value="pv-desc">PV 降序</option>
+            <option value="pv-asc">PV 升序</option>
+            <option value="uv-desc">UV 降序</option>
+            <option value="uv-asc">UV 升序</option>
+            <option value="key-asc">域名 A-Z</option>
+          </select>
+          <!-- Batch actions -->
+          <template x-if="selectedKeys.length>0">
+            <button class="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-md text-sm cursor-pointer hover:bg-red-500/30 transition"
+                    @click="openBatchDeleteKeys()">
+              删除选中 (<span x-text="selectedKeys.length"></span>)
+            </button>
+          </template>
+        </div>
       </div>
-      <div class="modal-body" style="padding:0;max-height:60vh;overflow-y:auto">
-        <table style="width:100%">
+
+      <!-- Sites Table -->
+      <div class="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden lt-md:overflow-x-auto">
+        <table class="lt-md:min-w-[600px]">
           <thead>
             <tr>
-              <th>路径</th>
-              <th style="width:80px">PV</th>
-              <th style="width:100px">操作</th>
+              <th class="w-[40px]"><input type="checkbox" class="ck" :checked="isAllSelected" @change="toggleSelectAll()"></th>
+              <th class="w-[30%]">域名</th>
+              <th>PV</th>
+              <th>UV</th>
+              <th>页面</th>
+              <th class="w-[200px]">操作</th>
             </tr>
           </thead>
-          <tbody id="pages-body">
-            <tr><td colspan="3" class="empty">加载中...</td></tr>
+          <tbody>
+            <template x-if="!pagedKeys.length">
+              <tr><td colspan="6" class="text-center py-12 text-zinc-500" x-text="loading?'加载中...':'暂无数据'"></td></tr>
+            </template>
+            <template x-for="k in pagedKeys" :key="k.site_key">
+              <tr>
+                <td><input type="checkbox" class="ck" :value="k.site_key" :checked="selectedKeys.includes(k.site_key)" @change="toggleSelect(k.site_key)"></td>
+                <td class="font-mono text-sm text-zinc-500 cursor-pointer hover:text-zinc-50 transition" @click="copy(k.site_key)" :title="k.site_key"
+                    x-text="k.site_key.length>30 ? k.site_key.slice(0,27)+'...' : k.site_key"></td>
+                <td class="tabular-nums" x-text="fmt(k.site_pv)"></td>
+                <td class="tabular-nums" x-text="fmt(k.site_uv)"></td>
+                <td class="tabular-nums">
+                  <a href="#" @click.prevent="openPages(k)" class="text-blue-500 no-underline hover:underline" x-text="fmt(k.page_count)"></a>
+                </td>
+                <td>
+                  <div class="flex gap-1 flex-wrap">
+                    <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="openEdit(k)">编辑</button>
+                    <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="openRename(k)">重命名</button>
+                    <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="openMerge(k)">合并</button>
+                    <button class="px-2 py-1 text-xs bg-transparent text-red-500 rounded cursor-pointer hover:text-red-400 hover:bg-white/5 transition" @click="openDelete(k.site_key)">删除</button>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
+        <!-- Pagination -->
+        <div class="flex justify-between items-center px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">
+          <span x-text="'共 '+filteredKeys.length+' 个站点'"></span>
+          <div class="flex items-center gap-2">
+            <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="sitePage<=1?'opacity-30 pointer-events-none':''" @click="sitePage--">上一页</button>
+            <span x-text="sitePage+'/'+siteTotalPages"></span>
+            <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="sitePage>=siteTotalPages?'opacity-30 pointer-events-none':''" @click="sitePage++">下一页</button>
+            <span class="ml-2" x-text="updatedAt"></span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div id="edit-page-modal" class="modal modal-top" onclick="if(event.target===this)closeModal('edit-page-modal')">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>编辑页面 PV</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-page-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Page Key</label>
-          <input type="text" id="edit-page-key" readonly style="font-size:0.75rem">
-        </div>
-        <div class="form-group">
-          <label>Page PV</label>
-          <input type="number" id="edit-page-pv" min="0">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('edit-page-modal')">取消</button>
-        <button class="btn btn-primary" onclick="savePageEdit()">保存</button>
-      </div>
-    </div>
-  </div>
+      <!-- ==================== Modals ==================== -->
 
-  <div id="import-modal" class="modal" onclick="if(event.target===this)closeModal('import-modal')">
-    <div class="modal-content" style="max-width:480px">
-      <div class="modal-header">
-        <h3>导入数据</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('import-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="import-tabs" style="display:flex;gap:0.5rem;margin-bottom:1rem">
-          <button class="btn btn-primary" id="tab-db" onclick="switchImportTab('db')">数据库</button>
-          <button class="btn btn-ghost" id="tab-sync" onclick="switchImportTab('sync')">Sitemap 同步</button>
-        </div>
-        
-        <div id="import-db-panel">
-          <div class="form-group">
-            <label>选择 data.db 文件</label>
-            <input type="file" id="import-file" accept=".db" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
-          </div>
-          <p class="help">上传从导出功能下载的 SQLite 数据库文件</p>
-          <p class="help" style="color:var(--warning);margin-top:0.5rem">⚠ 导入将覆盖现有数据！</p>
-        </div>
-        
-        <div id="import-sync-panel" class="hidden">
-          <div class="form-group">
-            <label>Sitemap URL</label>
-            <input type="url" id="sync-sitemap" placeholder="https://example.com/sitemap.xml">
-          </div>
-          <div class="form-group">
-            <label>或上传 XML 文件</label>
-            <input type="file" id="sync-file" accept=".xml" style="padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;width:100%">
-          </div>
-          <div class="form-group">
-            <label>并发数</label>
-            <input type="number" id="sync-concurrency" value="3" min="1" max="10" style="width:80px">
-          </div>
-          <p class="help">从 sitemap.xml 获取 URL，从 busuanzi.ibruce.info 拉取数据</p>
-          <div id="sync-progress" class="hidden" style="margin-top:1rem">
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-            <div id="progress-stats" style="display:flex;gap:1rem;margin:0.5rem 0;font-size:0.75rem;color:var(--muted)">
-              <span>进度: <b id="p-current">0</b>/<b id="p-total">0</b></span>
-              <span>成功: <b id="p-imported" style="color:var(--success)">0</b></span>
-              <span>失败: <b id="p-errors" style="color:var(--danger)">0</b></span>
+      <!-- Edit Site -->
+      <template x-if="modal==='edit'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="modal=null">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[420px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">编辑站点数据</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal=null">✕</button>
             </div>
-            <div id="progress-current" style="padding:0.5rem;background:var(--bg);border-radius:4px;font-size:0.8rem;font-family:monospace;max-height:120px;overflow-y:auto"></div>
+            <div class="p-5">
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">站点域名</label>
+                <input type="text" class="fi" :value="edit.key" readonly>
+              </div>
+              <div class="grid grid-cols-2 gap-4 lt-sm:grid-cols-1">
+                <div>
+                  <label class="block text-sm text-zinc-500 mb-1.5">Site PV</label>
+                  <input type="number" class="fi" x-model.number="edit.pv" min="0">
+                </div>
+                <div>
+                  <label class="block text-sm text-zinc-500 mb-1.5">Site UV</label>
+                  <input type="number" class="fi" x-model.number="edit.uv" min="0">
+                </div>
+              </div>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="modal=null">取消</button>
+              <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="saveEdit()">保存</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('import-modal')">取消</button>
-        <button class="btn btn-primary" id="import-btn" onclick="doImportAction()">导入</button>
-      </div>
+      </template>
+
+      <!-- Rename -->
+      <template x-if="modal==='rename'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="modal=null">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[420px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">重命名站点</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal=null">✕</button>
+            </div>
+            <div class="p-5">
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">原域名</label>
+                <input type="text" class="fi" :value="rename.oldKey" readonly>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">新域名</label>
+                <input type="text" class="fi" x-model="rename.newKey" placeholder="example.com">
+              </div>
+              <p class="text-xs text-zinc-500">用于网站更换域名后保留统计数据</p>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="modal=null">取消</button>
+              <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="confirmRename()">重命名</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Merge -->
+      <template x-if="modal==='merge'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="modal=null">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[420px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">合并站点数据</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal=null">✕</button>
+            </div>
+            <div class="p-5">
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">源站点（将被删除）</label>
+                <input type="text" class="fi" :value="merge.source" readonly>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">目标站点（保留）</label>
+                <input type="text" class="fi" x-model="merge.target" placeholder="example.com">
+              </div>
+              <p class="text-xs text-zinc-500">将源站点的 PV 累加到目标站点，UV 取较大值，页面数据合并</p>
+              <p class="text-xs text-amber-500 mt-2">⚠ 合并后源站点将被删除！</p>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="modal=null">取消</button>
+              <button class="px-4 py-2 bg-amber-500 text-black rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="confirmMerge()">合并</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Delete Confirm -->
+      <template x-if="modal==='delete'||modal==='deletePage'||modal==='batchDeleteKeys'||modal==='batchDeletePages'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-150" @click.self="cancelDelete()">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[420px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">确认删除</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="cancelDelete()">✕</button>
+            </div>
+            <div class="p-5">
+              <p>确定删除 <code class="text-blue-500" x-text="del.label"></code> 的所有数据？</p>
+              <p class="text-red-500 mt-3 text-sm">⚠ 此操作不可恢复！</p>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="cancelDelete()">取消</button>
+              <button class="px-4 py-2 bg-red-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="confirmDelete()">删除</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Pages List -->
+      <template x-if="modal==='pages'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="modal=null">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">页面列表 - <code class="text-sm" x-text="currentSiteKey"></code></h3>
+              <div class="flex gap-2 items-center">
+                <template x-if="selectedPageKeys.length>0">
+                  <button class="px-2 py-1 text-xs bg-red-500/20 text-red-400 border border-red-500/30 rounded cursor-pointer hover:bg-red-500/30 transition"
+                          @click="openBatchDeletePages()">删除选中 (<span x-text="selectedPageKeys.length"></span>)</button>
+                </template>
+                <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal=null">✕</button>
+              </div>
+            </div>
+            <div class="max-h-[55vh] overflow-y-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="w-[40px]"><input type="checkbox" class="ck" :checked="isAllPagesSelected" @change="toggleSelectAllPages()"></th>
+                    <th>路径</th>
+                    <th class="w-[80px]">PV</th>
+                    <th class="w-[100px]">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-if="pagesLoading">
+                    <tr><td colspan="4" class="text-center py-12 text-zinc-500">加载中...</td></tr>
+                  </template>
+                  <template x-if="!pagesLoading && !pagedPages.length">
+                    <tr><td colspan="4" class="text-center py-12 text-zinc-500">暂无页面数据</td></tr>
+                  </template>
+                  <template x-for="p in pagedPages" :key="p.page_key">
+                    <tr>
+                      <td><input type="checkbox" class="ck" :value="p.page_key" :checked="selectedPageKeys.includes(p.page_key)" @change="toggleSelectPage(p.page_key)"></td>
+                      <td class="font-mono text-sm text-zinc-500 cursor-pointer hover:text-zinc-50 transition" @click="copy(p.path)" :title="p.path"
+                          x-text="p.path.length>40 ? p.path.slice(0,37)+'...' : p.path"></td>
+                      <td class="tabular-nums" x-text="fmt(p.pv)"></td>
+                      <td>
+                        <div class="flex gap-1">
+                          <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="openPageEdit(p)">编辑</button>
+                          <button class="px-2 py-1 text-xs bg-transparent text-red-500 rounded cursor-pointer hover:text-red-400 hover:bg-white/5 transition" @click="openPageDelete(p)">删除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <!-- Page Pagination -->
+            <div class="flex justify-between items-center px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">
+              <span x-text="'共 '+pagesTotalCount+' 个页面'"></span>
+              <div class="flex items-center gap-2">
+                <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="pagesPage<=1?'opacity-30 pointer-events-none':''" @click="pagesPage--">上一页</button>
+                <span x-text="pagesPage+'/'+pagesTotalPages"></span>
+                <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="pagesPage>=pagesTotalPages?'opacity-30 pointer-events-none':''" @click="pagesPage++">下一页</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Edit Page PV -->
+      <template x-if="modal==='editPage'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-150" @click.self="modal='pages'">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[420px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">编辑页面 PV</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal='pages'">✕</button>
+            </div>
+            <div class="p-5">
+              <div class="mb-4">
+                <label class="block text-sm text-zinc-500 mb-1.5">Page Key</label>
+                <input type="text" class="fi !text-xs" :value="editPage.key" readonly>
+              </div>
+              <div>
+                <label class="block text-sm text-zinc-500 mb-1.5">Page PV</label>
+                <input type="number" class="fi" x-model.number="editPage.pv" min="0">
+              </div>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="modal='pages'">取消</button>
+              <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition" @click="savePageEdit()">保存</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Import/Sync -->
+      <template x-if="modal==='import'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="closeImport()">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[480px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">导入数据</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="closeImport()">✕</button>
+            </div>
+            <div class="p-5">
+              <div class="flex gap-2 mb-4">
+                <button class="px-3 py-1.5 border rounded-md text-sm cursor-pointer transition"
+                        :class="imp.tab==='db'?'bg-blue-500 text-white border-blue-500':'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-50 hover:border-zinc-600'"
+                        @click="imp.tab='db'">数据库导入</button>
+                <button class="px-3 py-1.5 border rounded-md text-sm cursor-pointer transition"
+                        :class="imp.tab==='sync'?'bg-blue-500 text-white border-blue-500':'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-50 hover:border-zinc-600'"
+                        @click="imp.tab='sync'">Sitemap 同步</button>
+              </div>
+              <template x-if="imp.tab==='db'">
+                <div>
+                  <div class="mb-4">
+                    <label class="block text-sm text-zinc-500 mb-1.5">选择 data.db 文件</label>
+                    <input type="file" accept=".db" class="fi !text-sm" @change="imp.dbFile=$event.target.files[0]">
+                  </div>
+                  <p class="text-xs text-zinc-500">上传从导出功能下载的 SQLite 数据库文件，将完全替换当前数据</p>
+                  <p class="text-xs text-amber-500 mt-2">⚠ 导入将覆盖现有数据！</p>
+                </div>
+              </template>
+              <template x-if="imp.tab==='sync'">
+                <div>
+                  <div class="mb-4">
+                    <label class="block text-sm text-zinc-500 mb-1.5">Sitemap URL</label>
+                    <input type="url" class="fi" x-model="imp.sitemapUrl" placeholder="https://example.com/sitemap.xml">
+                  </div>
+                  <div class="mb-4">
+                    <label class="block text-sm text-zinc-500 mb-1.5">或上传 XML 文件</label>
+                    <input type="file" accept=".xml" class="fi !text-sm" @change="imp.xmlFile=$event.target.files[0]">
+                  </div>
+                  <div class="mb-4">
+                    <label class="block text-sm text-zinc-500 mb-1.5">并发数</label>
+                    <input type="number" class="fi !w-20" x-model.number="imp.concurrency" min="1" max="10">
+                  </div>
+                  <p class="text-xs text-zinc-500">从 sitemap.xml 获取 URL 列表，从 busuanzi.ibruce.info 拉取历史数据（增量合并，不覆盖）</p>
+                  <template x-if="imp.syncing">
+                    <div class="mt-4">
+                      <div class="pbar"><div class="pfill" :style="'width:'+imp.progress.percent+'%'"></div></div>
+                      <div class="flex gap-4 my-2 text-xs text-zinc-500">
+                        <span>进度: <b class="text-zinc-50" x-text="imp.progress.current"></b>/<b x-text="imp.progress.total"></b></span>
+                        <span>成功: <b class="text-green-500" x-text="imp.progress.imported"></b></span>
+                        <span>失败: <b class="text-red-500" x-text="imp.progress.errors"></b></span>
+                      </div>
+                      <div class="p-2 bg-zinc-950 rounded text-sm font-mono max-h-[150px] overflow-y-auto">
+                        <template x-for="(line, i) in imp.logs" :key="i">
+                          <div class="py-px" :class="line.error?'text-red-500':line.ok?'text-green-500':'text-zinc-500'" x-text="line.text"></div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+            <div class="px-5 py-4 border-t border-zinc-800 flex gap-2 justify-end">
+              <button class="px-3 py-1.5 bg-transparent text-zinc-500 rounded-md text-sm cursor-pointer hover:text-zinc-50 hover:bg-white/5 transition" @click="closeImport()">取消</button>
+              <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm cursor-pointer hover:opacity-85 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      @click="doImport()" :disabled="imp.busy"
+                      x-text="imp.busy?(imp.tab==='db'?'导入中...':'同步中...'):(imp.tab==='db'?'导入':'开始同步')"></button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Operation Logs -->
+      <template x-if="modal==='logs'">
+        <div class="fixed inset-0 bg-black/75 flex justify-center items-center z-100" @click.self="modal=null" x-init="loadLogs()">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-9/10 max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 class="text-base font-medium">操作日志</h3>
+              <button class="px-2 py-1 text-xs bg-transparent text-zinc-500 rounded cursor-pointer hover:text-zinc-50 transition" @click="modal=null">✕</button>
+            </div>
+            <div class="max-h-[60vh] overflow-y-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="w-[160px]">时间</th>
+                    <th class="w-[100px]">操作</th>
+                    <th>详情</th>
+                    <th class="w-[100px]">IP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-if="logsLoading">
+                    <tr><td colspan="4" class="text-center py-12 text-zinc-500">加载中...</td></tr>
+                  </template>
+                  <template x-if="!logsLoading && !logs.length">
+                    <tr><td colspan="4" class="text-center py-12 text-zinc-500">暂无日志</td></tr>
+                  </template>
+                  <template x-for="l in logs" :key="l.id">
+                    <tr>
+                      <td class="text-xs text-zinc-500 tabular-nums" x-text="l.timestamp"></td>
+                      <td><span class="text-xs px-1.5 py-0.5 rounded" :class="logColor(l.action)" x-text="logLabel(l.action)"></span></td>
+                      <td class="text-sm text-zinc-400 font-mono" x-text="l.detail.length>60?l.detail.slice(0,57)+'...':l.detail" :title="l.detail"></td>
+                      <td class="text-xs text-zinc-500 font-mono" x-text="l.ip"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <div class="flex justify-between items-center px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">
+              <span x-text="'共 '+logsTotal+' 条'"></span>
+              <div class="flex items-center gap-2">
+                <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="logsPage<=1?'opacity-30 pointer-events-none':''" @click="logsPage--;loadLogs()">上一页</button>
+                <span x-text="logsPage+'/'+logsTotalPages"></span>
+                <button class="px-2 py-1 rounded cursor-pointer hover:bg-white/5 transition" :class="logsPage>=logsTotalPages?'opacity-30 pointer-events-none':''" @click="logsPage++;loadLogs()">下一页</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
     </div>
-  </div>
+  </template>
 
-  <div id="toast" class="toast"></div>
-
+  <script src="/static/vendor/alpine.min.js" defer></script>
+  <script src="/static/vendor/chart.min.js"></script>
   <script>
-    const API = '/api/admin';
-    let token = localStorage.getItem('admin-token') || '';
-    let allKeys = [];
-    let currentSiteKey = '';
+    const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+    const SITE_PAGE_SIZE = 20;
+    const PAGES_PAGE_SIZE = 30;
 
-    const $ = id => document.getElementById(id);
-    const fmt = n => n?.toLocaleString() ?? '-';
-    const now = () => new Date().toLocaleTimeString();
-    
-    function headers() {
-      return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
-    }
+    function app() {
+      return {
+        token: localStorage.getItem('admin-token') || '',
+        tokenInput: '',
+        authed: false,
+        loading: false,
+        stats: {},
+        allKeys: [],
+        search: '',
+        sort: 'pv-desc',
+        updatedAt: '-',
+        modal: null,
 
-    function toast(msg, type = 'success') {
-      const el = $('toast');
-      el.textContent = msg;
-      el.className = 'toast show ' + type;
-      setTimeout(() => el.className = 'toast', 2500);
-    }
+        // Edit
+        edit: { key: '', pv: 0, uv: 0 },
+        rename: { oldKey: '', newKey: '' },
+        merge: { source: '', target: '' },
+        del: { siteKey: '', pageKey: '', label: '', batch: false, batchType: '' },
 
-    function closeModal(id) {
-      $(id).classList.remove('show');
-    }
+        // Pages
+        currentSiteKey: '',
+        pages: [],
+        pagesLoading: false,
+        pagesPage: 1,
+        editPage: { key: '', pv: 0 },
 
-    function login() {
-      token = $('token-input').value.trim();
-      if (!token) return toast('请输入 Token', 'error');
-      localStorage.setItem('admin-token', token);
-      init();
-    }
+        // Selection
+        selectedKeys: [],
+        selectedPageKeys: [],
 
-    function logout() {
-      token = '';
-      localStorage.removeItem('admin-token');
-      $('auth').classList.remove('hidden');
-      $('main').classList.add('hidden');
-      $('token-input').value = '';
-    }
+        // Pagination
+        sitePage: 1,
 
-    async function init() {
-      try {
-        const res = await fetch(API + '/stats', { headers: headers() });
-        if (!res.ok) throw new Error('认证失败');
-        const json = await res.json();
-        if (!json.success) throw new Error('失败');
-        const data = json.data || {};
-        
-        $('auth').classList.add('hidden');
-        $('main').classList.remove('hidden');
-        $('stat-sites').textContent = fmt(data.total_sites);
-        $('stat-pages').textContent = fmt(data.total_pages);
-        $('stat-pv').textContent = fmt(data.total_site_pv);
-        $('stat-uv').textContent = fmt(data.total_site_uv);
-        $('status-time').textContent = '更新于 ' + now();
-        
-        loadKeys();
-      } catch (e) {
-        $('auth').classList.remove('hidden');
-        $('main').classList.add('hidden');
-        if (token) toast('认证失败', 'error');
-      }
-    }
+        // Auto-refresh
+        autoRefreshInterval: 0,
+        countdown: 0,
+        _refreshTimer: null,
+        _countdownTimer: null,
 
-    async function loadKeys() {
-      try {
-        const res = await fetch(API + '/keys?count=500', { headers: headers() });
-        const json = await res.json();
-        allKeys = json.data || [];
-        filterKeys();
-      } catch (e) {
-        toast('加载失败', 'error');
-      }
-    }
+        // Charts
+        _barChart: null,
+        _doughnutChart: null,
 
-    function filterKeys() {
-      const q = $('search').value.toLowerCase().trim();
-      let filtered = q ? allKeys.filter(k => k.site_key.toLowerCase().includes(q)) : [...allKeys];
-      
-      const sort = $('sort').value;
-      filtered.sort((a, b) => {
-        switch (sort) {
-          case 'pv-desc': return (b.site_pv || 0) - (a.site_pv || 0);
-          case 'pv-asc': return (a.site_pv || 0) - (b.site_pv || 0);
-          case 'uv-desc': return (b.site_uv || 0) - (a.site_uv || 0);
-          case 'uv-asc': return (a.site_uv || 0) - (b.site_uv || 0);
-          case 'key-asc': return a.site_key.localeCompare(b.site_key);
-          default: return 0;
-        }
-      });
-      
-      renderKeys(filtered);
-      $('status-count').textContent = `共 ${filtered.length} 个站点`;
-    }
+        // Logs
+        logs: [],
+        logsLoading: false,
+        logsPage: 1,
+        logsTotal: 0,
 
-    function renderKeys(keys) {
-      const tbody = $('keys-body');
-      if (!keys.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无数据</td></tr>';
-        return;
-      }
-      tbody.innerHTML = keys.map(k => {
-        const display = k.site_key;
-        const shortDisplay = display.length > 30 ? display.slice(0, 27) + '...' : display;
-        const safeKey = k.site_key.replace(/'/g, "\\'");
-        return `
-        <tr>
-          <td class="hash" onclick="copyText('${safeKey}')" title="${k.site_key}">${shortDisplay}</td>
-          <td class="num">${fmt(k.site_pv)}</td>
-          <td class="num">${fmt(k.site_uv)}</td>
-          <td class="num"><a href="#" onclick="openPages('${safeKey}');return false" style="color:var(--accent)">${fmt(k.page_count)}</a></td>
-          <td class="actions">
-            <button class="btn btn-ghost btn-sm" onclick="openEdit('${safeKey}', ${k.site_pv || 0}, ${k.site_uv || 0})">编辑</button>
-            <button class="btn btn-ghost btn-sm" onclick="openRename('${safeKey}')">重命名</button>
-            <button class="btn btn-ghost btn-sm" onclick="openMerge('${safeKey}')">合并</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openDelete('${safeKey}')">删除</button>
-          </td>
-        </tr>
-      `}).join('');
-    }
+        // Import
+        imp: { tab: 'db', dbFile: null, sitemapUrl: '', xmlFile: null, concurrency: 3, busy: false, syncing: false, progress: { total: 0, current: 0, imported: 0, errors: 0, percent: 0 }, logs: [], sse: null },
+        toast: { show: false, msg: '', type: 'success' },
 
-    function copyText(text) {
-      navigator.clipboard.writeText(text);
-      toast('已复制');
-    }
-
-    function openEdit(siteKey, pv, uv) {
-      currentSiteKey = siteKey;
-      $('edit-key').value = siteKey;
-      $('edit-pv').value = pv;
-      $('edit-uv').value = uv;
-      $('edit-modal').classList.add('show');
-      $('edit-pv').focus();
-    }
-
-    async function saveEdit() {
-      const pv = parseInt($('edit-pv').value) || 0;
-      const uv = parseInt($('edit-uv').value) || 0;
-      try {
-        // Save PV
-        await fetch(API + '/keys/update', {
-          method: 'POST',
-          headers: headers(),
-          body: JSON.stringify({ site_key: currentSiteKey, key_type: 'site_pv', value: pv })
-        });
-        // Save UV
-        await fetch(API + '/keys/update', {
-          method: 'POST',
-          headers: headers(),
-          body: JSON.stringify({ site_key: currentSiteKey, key_type: 'site_uv', value: uv })
-        });
-        toast('已保存');
-        closeModal('edit-modal');
-        init();
-      } catch (e) {
-        toast('保存失败', 'error');
-      }
-    }
-
-    function openDelete(siteKey) {
-      currentSiteKey = siteKey;
-      $('delete-key').textContent = siteKey;
-      $('delete-modal').classList.add('show');
-    }
-
-    function openRename(siteKey) {
-      currentSiteKey = siteKey;
-      $('rename-old').value = siteKey;
-      $('rename-new').value = '';
-      $('rename-modal').classList.add('show');
-      $('rename-new').focus();
-    }
-
-    async function confirmRename() {
-      const newKey = $('rename-new').value.trim();
-      if (!newKey) return toast('请输入新域名', 'error');
-      
-      try {
-        const res = await fetch(API + '/keys/rename', {
-          method: 'POST',
-          headers: headers(),
-          body: JSON.stringify({ old_key: currentSiteKey, new_key: newKey })
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error(result.message);
-        toast(result.message);
-        closeModal('rename-modal');
-        init();
-      } catch (e) {
-        toast(e.message || '重命名失败', 'error');
-      }
-    }
-
-    function openMerge(siteKey) {
-      currentSiteKey = siteKey;
-      $('merge-source').value = siteKey;
-      $('merge-target').value = '';
-      $('merge-modal').classList.add('show');
-      $('merge-target').focus();
-    }
-
-    async function confirmMerge() {
-      const targetKey = $('merge-target').value.trim();
-      if (!targetKey) return toast('请输入目标站点', 'error');
-      
-      try {
-        const res = await fetch(API + '/keys/merge', {
-          method: 'POST',
-          headers: headers(),
-          body: JSON.stringify({ source_key: currentSiteKey, target_key: targetKey })
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error(result.message);
-        toast(result.message);
-        closeModal('merge-modal');
-        init();
-      } catch (e) {
-        toast(e.message || '合并失败', 'error');
-      }
-    }
-
-    async function confirmDelete() {
-      try {
-        let url = API + '/keys?site_key=' + encodeURIComponent(currentSiteKey);
-        if (currentPageKey) {
-          url += '&page_key=' + encodeURIComponent(currentPageKey);
-        }
-        const res = await fetch(url, {
-          method: 'DELETE',
-          headers: headers()
-        });
-        if (!res.ok) throw new Error();
-        toast('已删除');
-        closeModal('delete-modal');
-        if (currentPageKey) {
-          currentPageKey = '';
-          openPages(currentSiteKey); // Refresh pages list
-        } else {
-          init();
-        }
-      } catch (e) {
-        toast('删除失败', 'error');
-      }
-    }
-
-    // ==================== Pages Management ====================
-    let currentPageKey = '';
-
-    async function openPages(siteKey) {
-      currentSiteKey = siteKey;
-      $('pages-site-key').textContent = siteKey;
-      $('pages-body').innerHTML = '<tr><td colspan="3" class="empty">加载中...</td></tr>';
-      $('pages-modal').classList.add('show');
-
-      try {
-        const res = await fetch(API + '/pages?site_key=' + encodeURIComponent(siteKey), { headers: headers() });
-        const json = await res.json();
-        const pages = json.data || [];
-        
-        if (!pages.length) {
-          $('pages-body').innerHTML = '<tr><td colspan="3" class="empty">暂无页面数据</td></tr>';
-          return;
-        }
-
-        $('pages-body').innerHTML = pages.map(p => {
-          const display = p.path;
-          const shortDisplay = display.length > 40 ? display.slice(0, 37) + '...' : display;
-          const safePageKey = p.page_key.replace(/'/g, "\\'");
-          const safePath = p.path.replace(/'/g, "\\'");
-          return `
-          <tr>
-            <td class="hash" onclick="copyText('${safePath}')" title="${p.path}">${shortDisplay}</td>
-            <td class="num">${fmt(p.pv)}</td>
-            <td class="actions">
-              <button class="btn btn-ghost btn-sm" onclick="openPageEdit('${safePageKey}', ${p.pv})">编辑</button>
-              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="openPageDelete('${safePageKey}', '${shortDisplay.replace(/'/g, "\\'")}')">删除</button>
-            </td>
-          </tr>
-        `}).join('');
-      } catch (e) {
-        $('pages-body').innerHTML = '<tr><td colspan="3" class="empty">加载失败</td></tr>';
-      }
-    }
-
-    function openPageEdit(pageKey, pv) {
-      currentPageKey = pageKey;
-      $('edit-page-key').value = pageKey;
-      $('edit-page-pv').value = pv;
-      $('edit-page-modal').classList.add('show');
-      $('edit-page-pv').focus();
-    }
-
-    async function savePageEdit() {
-      const pv = parseInt($('edit-page-pv').value) || 0;
-      try {
-        const res = await fetch(API + '/pages/update', {
-          method: 'POST',
-          headers: headers(),
-          body: JSON.stringify({ page_key: currentPageKey, pv })
-        });
-        if (!res.ok) throw new Error();
-        toast('已保存');
-        closeModal('edit-page-modal');
-        openPages(currentSiteKey); // Refresh
-      } catch (e) {
-        toast('保存失败', 'error');
-      }
-    }
-
-    function openPageDelete(pageKey, pagePath) {
-      currentPageKey = pageKey;
-      $('delete-key').textContent = '页面 ' + pagePath;
-      $('delete-modal').classList.add('show');
-    }
-
-    function exportData() {
-      const link = document.createElement('a');
-      link.href = API + '/export?token=' + encodeURIComponent(token);
-      link.click();
-      toast('开始下载 data.db');
-    }
-
-    // ==================== Import ====================
-    let currentImportTab = 'db';
-    let syncEventSource = null;
-
-    function switchImportTab(tab) {
-      currentImportTab = tab;
-      $('tab-db').className = tab === 'db' ? 'btn btn-primary' : 'btn btn-ghost';
-      $('tab-sync').className = tab === 'sync' ? 'btn btn-primary' : 'btn btn-ghost';
-      $('import-db-panel').classList.toggle('hidden', tab !== 'db');
-      $('import-sync-panel').classList.toggle('hidden', tab !== 'sync');
-      $('import-btn').textContent = tab === 'db' ? '导入' : '开始同步';
-    }
-
-    function openImport() {
-      $('import-file').value = '';
-      $('sync-sitemap').value = '';
-      $('sync-file').value = '';
-      $('sync-progress').classList.add('hidden');
-      $('import-btn').disabled = false;
-      switchImportTab('db');
-      $('import-modal').classList.add('show');
-    }
-
-    async function doImportAction() {
-      if (currentImportTab === 'db') {
-        await doImportDb();
-      } else {
-        await doSync();
-      }
-    }
-
-    async function doImportDb() {
-      const file = $('import-file').files[0];
-      if (!file) {
-        return toast('请选择 data.db 文件', 'error');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch(API + '/import', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token },
-          body: formData
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error(result.message);
-        toast(result.message);
-        closeModal('import-modal');
-        init();
-      } catch (e) {
-        toast('导入失败: ' + e.message, 'error');
-      }
-    }
-
-    async function doSync() {
-      const sitemap = $('sync-sitemap').value.trim();
-      const file = $('sync-file').files[0];
-      const concurrency = parseInt($('sync-concurrency').value) || 3;
-      
-      if (!sitemap && !file) {
-        return toast('请输入 Sitemap URL 或上传 XML 文件', 'error');
-      }
-
-      const btn = $('import-btn');
-      const progress = $('sync-progress');
-      const currentLog = $('progress-current');
-      
-      btn.disabled = true;
-      btn.textContent = '同步中...';
-      progress.classList.remove('hidden');
-
-      if (syncEventSource) syncEventSource.close();
-
-      let syncUrl;
-
-      if (file) {
-        currentLog.innerHTML = `<div style="color:var(--muted)">正在解析上传的 XML 文件...</div>`;
-        
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-          const res = await fetch(API + '/sync/upload', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
-            body: formData
+        get filteredKeys() {
+          const q = this.search.toLowerCase().trim();
+          let list = q ? this.allKeys.filter(k => k.site_key.toLowerCase().includes(q)) : [...this.allKeys];
+          list.sort((a, b) => {
+            switch (this.sort) {
+              case 'pv-desc': return (b.site_pv||0)-(a.site_pv||0);
+              case 'pv-asc':  return (a.site_pv||0)-(b.site_pv||0);
+              case 'uv-desc': return (b.site_uv||0)-(a.site_uv||0);
+              case 'uv-asc':  return (a.site_uv||0)-(b.site_uv||0);
+              case 'key-asc': return a.site_key.localeCompare(b.site_key);
+              default: return 0;
+            }
           });
-          const result = await res.json();
-          if (!result.success) {
-            currentLog.innerHTML = `<div style="color:var(--danger)">${result.message}</div>`;
-            btn.disabled = false;
-            btn.textContent = '重试';
+          return list;
+        },
+        get siteTotalPages() { return Math.max(1, Math.ceil(this.filteredKeys.length / SITE_PAGE_SIZE)); },
+        get pagedKeys() { return this.filteredKeys.slice((this.sitePage-1)*SITE_PAGE_SIZE, this.sitePage*SITE_PAGE_SIZE); },
+        get isAllSelected() { return this.pagedKeys.length>0 && this.pagedKeys.every(k=>this.selectedKeys.includes(k.site_key)); },
+        get pagesTotalCount() { return this.pages.length; },
+        get pagesTotalPages() { return Math.max(1, Math.ceil(this.pages.length / PAGES_PAGE_SIZE)); },
+        get pagedPages() { return this.pages.slice((this.pagesPage-1)*PAGES_PAGE_SIZE, this.pagesPage*PAGES_PAGE_SIZE); },
+        get isAllPagesSelected() { return this.pagedPages.length>0 && this.pagedPages.every(p=>this.selectedPageKeys.includes(p.page_key)); },
+        get logsTotalPages() { return Math.max(1, Math.ceil(this.logsTotal / 20)); },
+
+        init() {
+          // Check token expiry
+          const loginTime = parseInt(localStorage.getItem('admin-login-time') || '0');
+          if (loginTime && (Date.now() - loginTime > TOKEN_EXPIRY_MS)) {
+            this.logout();
             return;
           }
-          currentLog.innerHTML = `<div style="color:var(--muted)">解析完成，发现 ${result.url_count} 个 URL...</div>`;
-          syncUrl = `${API}/sync?sync_id=${encodeURIComponent(result.sync_id)}&concurrency=${concurrency}&token=${encodeURIComponent(token)}`;
-        } catch (e) {
-          currentLog.innerHTML = `<div style="color:var(--danger)">上传失败: ${e.message}</div>`;
-          btn.disabled = false;
-          btn.textContent = '重试';
-          return;
-        }
-      } else {
-        currentLog.innerHTML = `<div style="color:var(--muted)">正在获取 sitemap...</div>`;
-        syncUrl = `${API}/sync?sitemap_url=${encodeURIComponent(sitemap)}&concurrency=${concurrency}&token=${encodeURIComponent(token)}`;
-      }
+          if (this.token) this.login();
+        },
 
-      syncEventSource = new EventSource(syncUrl);
+        fmt(n) { return n != null ? n.toLocaleString() : '-'; },
+        showToast(msg, type='success') { this.toast={show:true,msg,type}; setTimeout(()=>this.toast.show=false,2500); },
+        headers() { return {'Authorization':'Bearer '+this.token,'Content-Type':'application/json'}; },
+        async api(path, opts={}) {
+          const res = await fetch('/api/admin'+path,{headers:this.headers(),...opts});
+          if (res.status === 401) { this.logout(); this.showToast('登录已过期，请重新登录','error'); throw new Error('unauthorized'); }
+          if (res.status === 429) { const j = await res.json(); this.showToast(j.message||'请求过于频繁','error'); throw new Error('rate limited'); }
+          return res.json();
+        },
+        copy(text) { navigator.clipboard.writeText(text); this.showToast('已复制'); },
+        closeAllModals() { this.modal=null; },
 
-      syncEventSource.addEventListener('progress', (e) => {
-        const d = JSON.parse(e.data);
-        if (d.total) {
-          $('p-total').textContent = d.total;
-          $('p-current').textContent = d.current || 0;
-          $('p-imported').textContent = d.imported || 0;
-          $('p-errors').textContent = d.errors || 0;
-          $('progress-fill').style.width = Math.round((d.current / d.total) * 100) + '%';
-        }
-        if (d.path) {
-          const line = d.error 
-            ? `<div style="color:var(--danger)">✗ ${d.path}</div>`
-            : `<div><span style="color:var(--success)">✓</span> ${d.path} <span style="color:var(--muted)">PV:${d.page_pv}</span></div>`;
-          currentLog.innerHTML = line + currentLog.innerHTML;
-          while (currentLog.children.length > 20) currentLog.lastChild.remove();
-        } else if (d.message) {
-          currentLog.innerHTML = `<div style="color:var(--muted)">${d.message}</div>` + currentLog.innerHTML;
-        }
-      });
+        // Auth
+        async login() {
+          if(this.tokenInput){this.token=this.tokenInput.trim();localStorage.setItem('admin-token',this.token);localStorage.setItem('admin-login-time',Date.now().toString());}
+          if(!this.token) return this.showToast('请输入 Token','error');
+          try{const j=await this.api('/stats');if(!j.success)throw 0;this.stats=j.data||{};this.authed=true;this.updatedAt='更新于 '+new Date().toLocaleTimeString();this.loadKeys();}
+          catch(e){if(e.message!=='unauthorized'){this.authed=false;if(this.token)this.showToast('认证失败','error');}}
+        },
+        logout(){this.token='';this.authed=false;localStorage.removeItem('admin-token');localStorage.removeItem('admin-login-time');this.tokenInput='';this.stopAutoRefresh();},
+        async refresh(){await this.login();},
 
-      syncEventSource.addEventListener('error', (e) => {
-        let msg = '同步失败';
-        try { msg = JSON.parse(e.data).message; } catch {}
-        currentLog.innerHTML = `<div style="color:var(--danger)">${msg}</div>` + currentLog.innerHTML;
-        btn.disabled = false;
-        btn.textContent = '重试';
-        syncEventSource.close();
-      });
+        // Auto-refresh
+        toggleAutoRefresh() {
+          this.stopAutoRefresh();
+          const sec = parseInt(this.autoRefreshInterval);
+          if (sec > 0) this.startAutoRefresh(sec);
+        },
+        startAutoRefresh(sec) {
+          this.countdown = sec;
+          this._countdownTimer = setInterval(() => {
+            this.countdown--;
+            if (this.countdown <= 0) { this.countdown = sec; this.refresh(); }
+          }, 1000);
+        },
+        stopAutoRefresh() {
+          if (this._countdownTimer) { clearInterval(this._countdownTimer); this._countdownTimer = null; }
+          this.countdown = 0;
+        },
 
-      syncEventSource.addEventListener('complete', (e) => {
-        const data = JSON.parse(e.data);
-        currentLog.innerHTML = `<div style="color:var(--success);font-weight:500">${data.message}</div>` + currentLog.innerHTML;
-        $('progress-fill').style.width = '100%';
-        toast(data.message);
-        syncEventSource.close();
-        btn.disabled = false;
-        btn.textContent = '完成';
-        setTimeout(() => init(), 1000);
-      });
+        // Keys
+        async loadKeys(){
+          this.loading=true;
+          try{const j=await this.api('/keys?count=500');this.allKeys=j.data||[];this.$nextTick(()=>this.updateCharts());}
+          catch{}
+          this.loading=false;
+        },
 
-      syncEventSource.onerror = () => {
-        currentLog.innerHTML = `<div style="color:var(--danger)">连接断开</div>` + currentLog.innerHTML;
-        btn.disabled = false;
-        btn.textContent = '重试';
-        syncEventSource.close();
+        // Selection
+        toggleSelect(key) {
+          const i = this.selectedKeys.indexOf(key);
+          if (i>=0) this.selectedKeys.splice(i,1); else this.selectedKeys.push(key);
+        },
+        toggleSelectAll() {
+          if (this.isAllSelected) { this.selectedKeys = this.selectedKeys.filter(k=>!this.pagedKeys.some(pk=>pk.site_key===k)); }
+          else { for (const k of this.pagedKeys) { if (!this.selectedKeys.includes(k.site_key)) this.selectedKeys.push(k.site_key); } }
+        },
+        toggleSelectPage(key) {
+          const i = this.selectedPageKeys.indexOf(key);
+          if (i>=0) this.selectedPageKeys.splice(i,1); else this.selectedPageKeys.push(key);
+        },
+        toggleSelectAllPages() {
+          if (this.isAllPagesSelected) { this.selectedPageKeys = this.selectedPageKeys.filter(k=>!this.pagedPages.some(p=>p.page_key===k)); }
+          else { for (const p of this.pagedPages) { if (!this.selectedPageKeys.includes(p.page_key)) this.selectedPageKeys.push(p.page_key); } }
+        },
+
+        // Edit
+        openEdit(k){this.edit={key:k.site_key,pv:k.site_pv||0,uv:k.site_uv||0};this.modal='edit';},
+        async saveEdit(){
+          try{await this.api('/keys/update',{method:'POST',body:JSON.stringify({site_key:this.edit.key,key_type:'site_pv',value:this.edit.pv})});
+          await this.api('/keys/update',{method:'POST',body:JSON.stringify({site_key:this.edit.key,key_type:'site_uv',value:this.edit.uv})});
+          this.showToast('已保存');this.modal=null;this.refresh();}catch{this.showToast('保存失败','error');}
+        },
+
+        // Rename
+        openRename(k){this.rename={oldKey:k.site_key,newKey:''};this.modal='rename';},
+        async confirmRename(){
+          if(!this.rename.newKey.trim())return this.showToast('请输入新域名','error');
+          try{const r=await this.api('/keys/rename',{method:'POST',body:JSON.stringify({old_key:this.rename.oldKey,new_key:this.rename.newKey.trim()})});
+          if(!r.success)throw new Error(r.message);this.showToast(r.message);this.modal=null;this.refresh();}
+          catch(e){this.showToast(e.message||'重命名失败','error');}
+        },
+
+        // Merge
+        openMerge(k){this.merge={source:k.site_key,target:''};this.modal='merge';},
+        async confirmMerge(){
+          if(!this.merge.target.trim())return this.showToast('请输入目标站点','error');
+          try{const r=await this.api('/keys/merge',{method:'POST',body:JSON.stringify({source_key:this.merge.source,target_key:this.merge.target.trim()})});
+          if(!r.success)throw new Error(r.message);this.showToast(r.message);this.modal=null;this.refresh();}
+          catch(e){this.showToast(e.message||'合并失败','error');}
+        },
+
+        // Delete
+        openDelete(siteKey){this.del={siteKey,pageKey:'',label:siteKey,batch:false,batchType:''};this.modal='delete';},
+        openBatchDeleteKeys(){this.del={siteKey:'',pageKey:'',label:this.selectedKeys.length+' 个站点',batch:true,batchType:'keys'};this.modal='batchDeleteKeys';},
+        openBatchDeletePages(){this.del={siteKey:'',pageKey:'',label:this.selectedPageKeys.length+' 个页面',batch:true,batchType:'pages'};this.modal='batchDeletePages';},
+        cancelDelete(){
+          if(this.del.pageKey || this.del.batchType==='pages') this.modal='pages';
+          else this.modal=null;
+        },
+        async confirmDelete(){
+          try{
+            if(this.del.batch && this.del.batchType==='keys'){
+              const r=await this.api('/keys/batch-delete',{method:'POST',body:JSON.stringify({site_keys:this.selectedKeys})});
+              if(!r.success)throw new Error(r.message);this.showToast(r.message);this.selectedKeys=[];this.modal=null;this.refresh();
+            } else if(this.del.batch && this.del.batchType==='pages'){
+              const r=await this.api('/pages/batch-delete',{method:'POST',body:JSON.stringify({page_keys:this.selectedPageKeys})});
+              if(!r.success)throw new Error(r.message);this.showToast(r.message);this.selectedPageKeys=[];this.modal='pages';this.loadPages(this.currentSiteKey);
+            } else {
+              let url='/keys?site_key='+encodeURIComponent(this.del.siteKey);
+              if(this.del.pageKey)url+='&page_key='+encodeURIComponent(this.del.pageKey);
+              const res=await fetch('/api/admin'+url,{method:'DELETE',headers:this.headers()});if(!res.ok)throw 0;
+              this.showToast('已删除');if(this.del.pageKey){this.modal='pages';this.loadPages(this.currentSiteKey);}else{this.modal=null;this.refresh();}
+            }
+          }catch(e){this.showToast(e.message||'删除失败','error');}
+        },
+
+        // Pages
+        async openPages(k){this.currentSiteKey=k.site_key;this.pages=[];this.pagesLoading=true;this.pagesPage=1;this.selectedPageKeys=[];this.modal='pages';await this.loadPages(k.site_key);},
+        async loadPages(sk){this.pagesLoading=true;try{const j=await this.api('/pages?site_key='+encodeURIComponent(sk)+'&count=500');this.pages=j.data||[];}catch{this.pages=[];}this.pagesLoading=false;},
+        openPageEdit(p){this.editPage={key:p.page_key,pv:p.pv};this.modal='editPage';},
+        async savePageEdit(){
+          try{const r=await this.api('/pages/update',{method:'POST',body:JSON.stringify({page_key:this.editPage.key,pv:this.editPage.pv})});
+          if(!r.success&&r.message)throw new Error(r.message);this.showToast('已保存');this.modal='pages';this.loadPages(this.currentSiteKey);}
+          catch(e){this.showToast(e.message||'保存失败','error');}
+        },
+        openPageDelete(p){const s=p.path.length>30?p.path.slice(0,27)+'...':p.path;this.del={siteKey:this.currentSiteKey,pageKey:p.page_key,label:'页面 '+s,batch:false,batchType:''};this.modal='deletePage';},
+
+        // Export / Import
+        doExport(){const a=document.createElement('a');a.href='/api/admin/export?token='+encodeURIComponent(this.token);a.click();this.showToast('开始下载 data.db');},
+        closeImport(){if(this.imp.sse){this.imp.sse.close();this.imp.sse=null;}this.modal=null;},
+        async doImport(){if(this.imp.tab==='db')return this.doImportDb();return this.doImportSync();},
+        async doImportDb(){
+          if(!this.imp.dbFile)return this.showToast('请选择 data.db 文件','error');
+          this.imp.busy=true;const fd=new FormData();fd.append('file',this.imp.dbFile);
+          try{const res=await fetch('/api/admin/import',{method:'POST',headers:{'Authorization':'Bearer '+this.token},body:fd});
+          const r=await res.json();if(!r.success)throw new Error(r.message);this.showToast(r.message);this.modal=null;this.refresh();}
+          catch(e){this.showToast('导入失败: '+e.message,'error');}this.imp.busy=false;
+        },
+        async doImportSync(){
+          const url=this.imp.sitemapUrl.trim(),file=this.imp.xmlFile;
+          if(!url&&!file)return this.showToast('请输入 Sitemap URL 或上传 XML 文件','error');
+          this.imp.busy=true;this.imp.syncing=true;this.imp.progress={total:0,current:0,imported:0,errors:0,percent:0};this.imp.logs=[];
+          if(this.imp.sse){this.imp.sse.close();this.imp.sse=null;}
+          let syncUrl;
+          if(file){
+            this.addLog('正在解析上传的 XML 文件...');const fd=new FormData();fd.append('file',file);
+            try{const res=await fetch('/api/admin/sync/upload',{method:'POST',headers:{'Authorization':'Bearer '+this.token},body:fd});
+            const r=await res.json();if(!r.success){this.addLog(r.message,true);this.imp.busy=false;return;}
+            this.addLog(`解析完成，发现 ${r.url_count} 个 URL`);
+            syncUrl=`/api/admin/sync?sync_id=${encodeURIComponent(r.sync_id)}&concurrency=${this.imp.concurrency}&token=${encodeURIComponent(this.token)}`;}
+            catch(e){this.addLog('上传失败: '+e.message,true);this.imp.busy=false;return;}
+          }else{
+            this.addLog('正在获取 sitemap...');
+            syncUrl=`/api/admin/sync?sitemap_url=${encodeURIComponent(url)}&concurrency=${this.imp.concurrency}&token=${encodeURIComponent(this.token)}`;
+          }
+          const sse=new EventSource(syncUrl);this.imp.sse=sse;
+          sse.addEventListener('progress',(e)=>{const d=JSON.parse(e.data);
+            if(d.total){this.imp.progress={total:d.total,current:d.current||0,imported:d.imported||0,errors:d.errors||0,percent:d.total?Math.round((d.current/d.total)*100):0};}
+            if(d.path){this.addLog(d.error?`✗ ${d.path}`:`✓ ${d.path} PV:${d.page_pv}`,!!d.error,!d.error);}else if(d.message){this.addLog(d.message);}
+          });
+          sse.addEventListener('error',(e)=>{let msg='同步失败';try{msg=JSON.parse(e.data).message;}catch{}this.addLog(msg,true);this.imp.busy=false;sse.close();});
+          sse.addEventListener('complete',(e)=>{const d=JSON.parse(e.data);this.addLog(d.message,false,true);this.imp.progress.percent=100;this.showToast(d.message);this.imp.busy=false;sse.close();this.imp.sse=null;setTimeout(()=>this.refresh(),1000);});
+          sse.onerror=()=>{this.addLog('连接断开',true);this.imp.busy=false;sse.close();this.imp.sse=null;};
+        },
+        addLog(text,error=false,ok=false){this.imp.logs.unshift({text,error,ok});if(this.imp.logs.length>30)this.imp.logs.length=30;},
+
+        // Logs
+        async loadLogs() {
+          this.logsLoading = true;
+          try {
+            const j = await this.api('/logs?page='+this.logsPage+'&size=20');
+            this.logs = j.data || [];
+            this.logsTotal = j.total || 0;
+          } catch { this.logs = []; }
+          this.logsLoading = false;
+        },
+        logLabel(action) {
+          const m = {delete_site:'删除站点',delete_page:'删除页面',edit_site:'编辑站点',edit_page:'编辑页面',rename_site:'重命名',merge_site:'合并站点',import:'导入',export:'导出',batch_delete_sites:'批量删除站点',batch_delete_pages:'批量删除页面'};
+          return m[action] || action;
+        },
+        logColor(action) {
+          if(action.includes('delete')||action.includes('batch_delete'))return 'bg-red-500/20 text-red-400';
+          if(action.includes('import')||action.includes('merge'))return 'bg-amber-500/20 text-amber-400';
+          if(action.includes('export'))return 'bg-green-500/20 text-green-400';
+          return 'bg-blue-500/20 text-blue-400';
+        },
+
+        // Charts
+        updateCharts() {
+          if (!this.allKeys.length) return;
+          const top10 = [...this.allKeys].sort((a,b)=>(b.site_pv||0)-(a.site_pv||0)).slice(0,10);
+          const colors = ['#3b82f6','#22c55e','#eab308','#ef4444','#a855f7','#ec4899','#14b8a6','#f97316','#06b6d4','#8b5cf6'];
+
+          // Bar chart
+          const barEl = this.$refs.barChart;
+          if (barEl) {
+            if (this._barChart) this._barChart.destroy();
+            this._barChart = new Chart(barEl, {
+              type: 'bar',
+              data: {
+                labels: top10.map(k => k.site_key.length>20 ? k.site_key.slice(0,17)+'...' : k.site_key),
+                datasets: [{
+                  data: top10.map(k => k.site_pv||0),
+                  backgroundColor: colors,
+                  borderRadius: 4,
+                  barPercentage: 0.7,
+                }]
+              },
+              options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => 'PV: '+c.raw.toLocaleString() } } },
+                scales: {
+                  x: { grid: { color: '#27272a' }, ticks: { color: '#71717a' } },
+                  y: { grid: { display: false }, ticks: { color: '#a1a1aa', font: { size: 11 } } }
+                }
+              }
+            });
+          }
+
+          // Doughnut chart
+          const dEl = this.$refs.doughnutChart;
+          if (dEl) {
+            if (this._doughnutChart) this._doughnutChart.destroy();
+            const dData = top10.map(k => k.site_pv||0);
+            const others = this.allKeys.slice(10).reduce((s,k) => s+(k.site_pv||0), 0);
+            const labels = top10.map(k => k.site_key.length>15 ? k.site_key.slice(0,12)+'...' : k.site_key);
+            if (others > 0) { dData.push(others); labels.push('其他'); colors.push('#52525b'); }
+            this._doughnutChart = new Chart(dEl, {
+              type: 'doughnut',
+              data: {
+                labels: labels,
+                datasets: [{ data: dData, backgroundColor: colors, borderWidth: 0 }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%',
+                plugins: {
+                  legend: { position: 'right', labels: { color: '#a1a1aa', boxWidth: 12, font: { size: 11 }, padding: 8 } },
+                  tooltip: { callbacks: { label: (c) => c.label+': '+c.raw.toLocaleString()+' PV' } }
+                }
+              }
+            });
+          }
+        },
       };
     }
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        closeModal('edit-modal');
-        closeModal('delete-modal');
-        closeModal('rename-modal');
-        closeModal('merge-modal');
-        closeModal('import-modal');
-        closeModal('pages-modal');
-        closeModal('edit-page-modal');
-      }
-    });
-
-    if (token) init();
-    else $('auth').classList.remove('hidden');
   </script>
 </body>
 </html>

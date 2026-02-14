@@ -344,10 +344,7 @@ fn store_stats(site_key: &str, page_key: &str, site_pv: u64, site_uv: u64, page_
             .store(site_uv, Ordering::Relaxed);
     }
 
-    STORE
-        .site_visitors
-        .entry(site_key.to_string())
-        .or_default();
+    STORE.site_visitors.entry(site_key.to_string()).or_default();
 
     STORE
         .page_pv

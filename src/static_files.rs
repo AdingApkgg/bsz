@@ -24,7 +24,11 @@ fn mime_type(path: &str) -> String {
         .unwrap_or("application/octet-stream");
 
     // Add charset=utf-8 for text types
-    if mime.starts_with("text/") || mime.contains("json") || mime.contains("xml") || mime.contains("javascript") {
+    if mime.starts_with("text/")
+        || mime.contains("json")
+        || mime.contains("xml")
+        || mime.contains("javascript")
+    {
         format!("{}; charset=utf-8", mime)
     } else {
         mime.to_string()
