@@ -63,10 +63,10 @@ cargo build --release
 
 ## 配置
 
-复制 `.env.example` 为 `.env` 并修改：
+复制 `example/.env` 为 `.env` 并修改：
 
 ```bash
-cp .env.example .env
+cp example/.env .env
 ```
 
 | 变量 | 说明 | 默认值 |
@@ -152,10 +152,10 @@ fetch('https://your-domain.com/api', {
 # 复制程序
 sudo mkdir -p /opt/bsz
 sudo cp target/release/busuanzi-rs /opt/bsz/
-sudo cp .env /opt/bsz/
+sudo cp example/.env /opt/bsz/.env
 
 # 安装服务
-sudo cp bsz.service /etc/systemd/system/
+sudo cp example/bsz.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now bsz
 
@@ -166,7 +166,7 @@ sudo journalctl -u bsz -f
 
 ### Nginx 反向代理
 
-参考 `nginx.conf.example` 配置 HTTP/3 + HTTP/2 + HSTS + SSL。
+参考 `example/nginx.conf` 配置 HTTP/3 + HTTP/2 + HSTS + SSL。
 
 ## 目录结构
 
@@ -178,8 +178,10 @@ sudo journalctl -u bsz -f
 │   ├── middleware/    # 中间件
 │   └── main.rs        # 入口
 ├── static/            # 嵌入的静态文件
-├── bsz.service        # systemd 服务配置
-├── nginx.conf.example # Nginx 配置示例
+├── example/           # 部署示例配置
+│   ├── .env           # 环境变量示例
+│   ├── bsz.service    # systemd 服务配置
+│   └── nginx.conf     # Nginx 配置示例
 └── data.db            # SQLite 数据库 (运行时生成)
 ```
 
