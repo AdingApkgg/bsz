@@ -58,8 +58,8 @@ cargo build --release
 ```
 
 访问：
-- API 文档: http://localhost:8080/
-- 管理后台: http://localhost:8080/admin
+- API 文档: http://localhost:12700/
+- 管理后台: http://localhost:12700/admin
 
 ## 配置
 
@@ -75,6 +75,7 @@ cp .env.example .env
 | `DOMAIN` | 对外域名 | `localhost:PORT` |
 | `ADMIN_TOKEN` | 管理密码 | _(空则禁用)_ |
 | `SAVE_INTERVAL` | 保存间隔(秒) | `30` |
+| `MAX_BODY_SIZE` | 上传体积上限 | `100MB` |
 
 ## 自定义页面
 

@@ -5,6 +5,7 @@ mod middleware;
 mod state;
 mod static_files;
 
+use axum::extract::DefaultBodyLimit;
 use axum::http::{header, HeaderName, Method};
 use axum::{
     middleware as axum_middleware,
@@ -88,6 +89,7 @@ async fn main() {
         .route("/import", post(api::admin::import_handler))
         .route("/sync", get(api::admin::sync_handler))
         .route("/sync/upload", post(api::admin::sync_upload_handler))
+        .layer(DefaultBodyLimit::max(CONFIG.max_body_size))
         .layer(axum_middleware::from_fn(
             middleware::admin_auth::admin_auth_middleware,
         ));
