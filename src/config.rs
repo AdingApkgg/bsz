@@ -8,8 +8,8 @@ pub struct Config {
     pub web_addr: String,
     pub domain: String,
     pub admin_token: String,
-    pub save_interval: u64,    // seconds
-    pub max_body_size: usize,  // bytes, for file upload (import/sync)
+    pub save_interval: u64,   // seconds
+    pub max_body_size: usize, // bytes, for file upload (import/sync)
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {

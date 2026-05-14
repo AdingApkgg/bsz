@@ -57,11 +57,10 @@ pub async fn list_pages_handler(Query(params): Query<ListPagesParams>) -> impl I
     }
 
     // Sort by PV descending
-    all_pages.sort_by(|a, b| b.pv.cmp(&a.pv));
+    all_pages.sort_by_key(|page| std::cmp::Reverse(page.pv));
 
     let total = all_pages.len();
     let pages: Vec<PageInfo> = all_pages.into_iter().skip(cursor).take(count).collect();
-
     let next_cursor = if pages.len() == count {
         cursor + count
     } else {
