@@ -3,6 +3,7 @@
 
 # Environment
 .env
+!example/.env
 
 # Data files
 data.db

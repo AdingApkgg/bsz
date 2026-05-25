@@ -383,7 +383,7 @@ async fn fetch_busuanzi_stats(
     for attempt in 0..MAX_RETRIES {
         match fetch_busuanzi_stats_once(client, page_url).await {
             Ok(result) => return Ok(result),
-            Err(e) if attempt < MAX_RETRIES - 1 => {
+            Err(_) if attempt < MAX_RETRIES - 1 => {
                 let delay = 500 * (1 << attempt);
                 tokio::time::sleep(Duration::from_millis(delay as u64)).await;
                 continue;

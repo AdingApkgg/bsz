@@ -4,7 +4,7 @@ mod core;
 mod middleware;
 mod state;
 mod static_files;
-
+use crate::config::CONFIG;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{header, HeaderName, Method};
 use axum::{
@@ -17,7 +17,34 @@ use std::time::Duration;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::config::CONFIG;
+fn admin_routes() -> Router {
+    Router::new()
+        .route("/keys", get(api::admin::list_keys_handler))
+        .route("/keys", delete(api::admin::delete_key_handler))
+        .route("/keys/update", post(api::admin::update_key_handler))
+        .route("/keys/rename", post(api::admin::rename_key_handler))
+        .route("/keys/merge", post(api::admin::merge_key_handler))
+        .route(
+            "/keys/batch-delete",
+            post(api::admin::batch_delete_keys_handler),
+        )
+        .route("/pages", get(api::admin::list_pages_handler))
+        .route("/pages/update", post(api::admin::update_page_handler))
+        .route(
+            "/pages/batch-delete",
+            post(api::admin::batch_delete_pages_handler),
+        )
+        .route("/stats", get(api::admin::stats_handler))
+        .route("/logs", get(api::admin::logs_handler))
+        .route("/export", get(api::admin::export_handler))
+        .route("/import", post(api::admin::import_handler))
+        .route("/sync", get(api::admin::sync_handler))
+        .route("/sync/upload", post(api::admin::sync_upload_handler))
+        .layer(DefaultBodyLimit::max(CONFIG.max_body_size))
+        .layer(axum_middleware::from_fn(
+            middleware::admin_auth::admin_auth_middleware,
+        ))
+}
 
 #[tokio::main]
 async fn main() {
@@ -66,50 +93,29 @@ async fn main() {
         .allow_credentials(true)
         .expose_headers([header::SET_COOKIE]);
 
-    // Admin routes (protected)
-    let admin_routes = Router::new()
-        .route("/keys", get(api::admin::list_keys_handler))
-        .route("/keys", delete(api::admin::delete_key_handler))
-        .route("/keys/update", post(api::admin::update_key_handler))
-        .route("/keys/rename", post(api::admin::rename_key_handler))
-        .route("/keys/merge", post(api::admin::merge_key_handler))
-        .route(
-            "/keys/batch-delete",
-            post(api::admin::batch_delete_keys_handler),
-        )
-        .route("/pages", get(api::admin::list_pages_handler))
-        .route("/pages/update", post(api::admin::update_page_handler))
-        .route(
-            "/pages/batch-delete",
-            post(api::admin::batch_delete_pages_handler),
-        )
-        .route("/stats", get(api::admin::stats_handler))
-        .route("/logs", get(api::admin::logs_handler))
-        .route("/export", get(api::admin::export_handler))
-        .route("/import", post(api::admin::import_handler))
-        .route("/sync", get(api::admin::sync_handler))
-        .route("/sync/upload", post(api::admin::sync_upload_handler))
-        .layer(DefaultBodyLimit::max(CONFIG.max_body_size))
-        .layer(axum_middleware::from_fn(
-            middleware::admin_auth::admin_auth_middleware,
-        ));
-
-    let app = Router::new()
+    let mut app = Router::new()
         // Main API
         .route("/api", post(api::handlers::api_handler))
         .route("/api", get(api::handlers::get_handler))
         .route("/api", put(api::handlers::put_handler))
         // Health check
         .route("/ping", get(api::handlers::ping_handler))
-        // Admin API
-        .nest("/api/admin", admin_routes)
         // Static files
         .route("/", get(static_files::serve_index))
-        .route("/admin", get(static_files::serve_admin))
         .route("/robots.txt", get(static_files::serve_robots))
         .route("/llms.txt", get(static_files::serve_llms))
         .route("/sitemap.xml", get(static_files::serve_sitemap))
-        .route("/static/{*path}", get(static_files::serve_static))
+        .route("/static/{*path}", get(static_files::serve_static));
+
+    if CONFIG.admin_enabled {
+        app = app
+            // Admin API
+            .nest("/api/admin", admin_routes())
+            // Admin panel
+            .route("/admin", get(static_files::serve_admin));
+    }
+
+    let app = app
         // Middleware
         .layer(axum_middleware::from_fn(
             middleware::identity::identity_middleware,
@@ -119,8 +125,11 @@ async fn main() {
 
     let addr: SocketAddr = CONFIG.web_addr.parse().expect("Invalid address");
     tracing::info!("Busuanzi listening on {}", addr);
-    tracing::info!("Admin panel: http://{}/admin", addr);
-    tracing::info!("Admin API protected: {}", !CONFIG.admin_token.is_empty());
+    tracing::info!("Admin interface enabled: {}", CONFIG.admin_enabled);
+    if CONFIG.admin_enabled {
+        tracing::info!("Admin panel: http://{}/admin", addr);
+        tracing::info!("Admin API protected: {}", !CONFIG.admin_token.is_empty());
+    }
     tracing::info!("Data saves every {}s", CONFIG.save_interval);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

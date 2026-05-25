@@ -7,9 +7,10 @@ use std::env;
 pub struct Config {
     pub web_addr: String,
     pub domain: String,
+    pub admin_enabled: bool,
     pub admin_token: String,
-    pub save_interval: u64,    // seconds
-    pub max_body_size: usize,  // bytes, for file upload (import/sync)
+    pub save_interval: u64,   // seconds
+    pub max_body_size: usize, // bytes, for file upload (import/sync)
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
@@ -20,6 +21,14 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     Config {
         web_addr: format!("0.0.0.0:{}", port),
         domain: env::var("DOMAIN").unwrap_or_else(|_| format!("localhost:{}", port)),
+        admin_enabled: env::var("ADMIN_ENABLED")
+            .map(|v| {
+                !matches!(
+                    v.trim().to_ascii_lowercase().as_str(),
+                    "0" | "false" | "no" | "off"
+                )
+            })
+            .unwrap_or(true),
         admin_token: env::var("ADMIN_TOKEN").unwrap_or_default(),
         save_interval: env::var("SAVE_INTERVAL")
             .ok()

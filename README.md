@@ -73,7 +73,8 @@ cp example/.env .env
 |------|------|--------|
 | `PORT` | 监听端口 | `8080` |
 | `DOMAIN` | 对外域名 | `localhost:PORT` |
-| `ADMIN_TOKEN` | 管理密码 | _(空则禁用)_ |
+| `ADMIN_ENABLED` | 是否注册 `/admin` 与 `/api/admin/*` | `true` |
+| `ADMIN_TOKEN` | 管理密码 | _(空则不校验)_ |
 | `SAVE_INTERVAL` | 保存间隔(秒) | `30` |
 | `MAX_BODY_SIZE` | 上传体积上限 | `100MB` |
 
@@ -117,6 +118,12 @@ fetch('https://your-domain.com/api', {
 ```
 
 ## 管理后台
+
+默认会注册管理后台路由；如需完全关闭管理后台和 Admin API，设置：
+
+```bash
+ADMIN_ENABLED=false
+```
 
 设置 `ADMIN_TOKEN` 后访问 `/admin`：
 
