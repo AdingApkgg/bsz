@@ -1,5 +1,4 @@
-import { API_BASE_URL } from "./config";
-import { adminToken, clearToken } from "./auth";
+import { activeConnection } from "./connections";
 
 export class ApiError extends Error {
   status: number;
@@ -11,32 +10,40 @@ export class ApiError extends Error {
 
 type ApiResponse<T> = { success: boolean; message?: string; data?: T; total?: number };
 
+function require_connection() {
+  const c = activeConnection();
+  if (!c) throw new ApiError("no active connection", 0);
+  if (!c.token) throw new ApiError("connection has no token", 0);
+  return c;
+}
+
 export function adminUrl(path: string): string {
-  return `${API_BASE_URL}/api/admin${path}`;
+  const c = activeConnection();
+  if (!c) throw new ApiError("no active connection", 0);
+  return `${c.baseUrl}/api/admin${path}`;
 }
 
 export function publicUrl(path: string): string {
-  return `${API_BASE_URL}${path}`;
+  const c = activeConnection();
+  if (!c) throw new ApiError("no active connection", 0);
+  return `${c.baseUrl}${path}`;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
-  const token = adminToken();
-  if (!token) throw new ApiError("not authenticated", 401);
+  const c = require_connection();
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${c.token}`,
     ...((init?.headers as Record<string, string>) ?? {}),
   };
   if (init?.body && !(init.body instanceof FormData) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(adminUrl(path), { ...init, headers });
+  const res = await fetch(`${c.baseUrl}/api/admin${path}`, { ...init, headers });
 
-  if (res.status === 401) {
-    clearToken();
-    throw new ApiError("unauthorized", 401);
-  }
+  if (res.status === 401) throw new ApiError("unauthorized", 401);
+  if (res.status === 404) throw new ApiError("admin api not available", 404);
   if (res.status === 429) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(body.message ?? "rate limited", 429);
@@ -88,13 +95,13 @@ export type LogEntry = {
 
 /// SSE URL for sync (needs query-string token since EventSource cannot set headers).
 export function syncEventSourceUrl(params: Record<string, string>): string {
-  const token = adminToken();
-  const search = new URLSearchParams({ ...params, token });
-  return `${adminUrl("/sync")}?${search.toString()}`;
+  const c = require_connection();
+  const search = new URLSearchParams({ ...params, token: c.token });
+  return `${c.baseUrl}/api/admin/sync?${search.toString()}`;
 }
 
-/// Direct download URL for /api/admin/export (uses query token).
+/// Direct download URL for /api/admin/export.
 export function exportDownloadUrl(): string {
-  const token = adminToken();
-  return `${adminUrl("/export")}?token=${encodeURIComponent(token)}`;
+  const c = require_connection();
+  return `${c.baseUrl}/api/admin/export?token=${encodeURIComponent(c.token)}`;
 }

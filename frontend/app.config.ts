@@ -7,8 +7,8 @@ export default defineConfig({
     preset: "static",
     compatibilityDate: "2026-05-25",
     prerender: {
-      routes: ["/", "/admin"],
-      crawlLinks: true,
+      routes: ["/"],
+      crawlLinks: false,
       failOnError: false,
     },
   },

@@ -1,35 +1,24 @@
 #!/usr/bin/env bun
-// Static-host helpers: a SolidStart `ssr: false` build emits a single
-// index.html, but GitHub Pages and Cloudflare Pages need explicit fallbacks
-// for client-side routes. This script:
-//   - copies index.html to 404.html (GH Pages SPA fallback)
-//   - mirrors index.html to /admin/index.html (so /admin works on any host)
-//   - writes a `_redirects` file for Cloudflare Pages / Netlify
-//   - writes a `.nojekyll` so GH Pages serves _build/ assets
+// Static-host helpers for SPA mode (ssr: false). The SolidStart static build
+// emits just `index.html`; for client-side routes (/welcome, /app/...) we need
+// fallbacks on the hosting layer:
+//   - 404.html → GitHub Pages SPA fallback
+//   - _redirects → Cloudflare Pages / Netlify SPA fallback
+//   - .nojekyll → GH Pages: don't strip _build/* assets
 
-import { copyFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const OUT = join(process.cwd(), ".output", "public");
+const indexHtml = join(OUT, "index.html");
 
-if (!existsSync(join(OUT, "index.html"))) {
+if (!existsSync(indexHtml)) {
   console.error("[postbuild] .output/public/index.html missing — did `vinxi build` succeed?");
   process.exit(1);
 }
 
-const indexHtml = join(OUT, "index.html");
-
-// GitHub Pages SPA fallback
 copyFileSync(indexHtml, join(OUT, "404.html"));
-
-// /admin direct URL
-mkdirSync(join(OUT, "admin"), { recursive: true });
-copyFileSync(indexHtml, join(OUT, "admin", "index.html"));
-
-// Cloudflare Pages / Netlify
 writeFileSync(join(OUT, "_redirects"), "/* /index.html 200\n");
-
-// GH Pages: don't apply Jekyll processing (preserves _build/ etc.)
 writeFileSync(join(OUT, ".nojekyll"), "");
 
-console.log("[postbuild] wrote 404.html, admin/index.html, _redirects, .nojekyll");
+console.log("[postbuild] wrote 404.html, _redirects, .nojekyll");

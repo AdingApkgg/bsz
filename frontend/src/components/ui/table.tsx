@@ -1,52 +1,70 @@
-import { splitProps, type JSX, type ParentComponent } from "solid-js";
-import { cn } from "~/lib/cn";
+import type { Component, ComponentProps } from "solid-js"
+import { splitProps } from "solid-js"
 
-export const Table: ParentComponent<JSX.HTMLAttributes<HTMLTableElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
+import { cn } from "~/lib/utils"
+
+const Table: Component<ComponentProps<"table">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
   return (
-    <div class="w-full overflow-auto">
-      <table class={cn("w-full caption-bottom text-sm", local.class)} {...rest}>
-        {local.children}
-      </table>
+    <div class="relative w-full overflow-auto">
+      <table class={cn("w-full caption-bottom text-sm", local.class)} {...others} />
     </div>
-  );
-};
+  )
+}
 
-export const THead: ParentComponent<JSX.HTMLAttributes<HTMLTableSectionElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
-  return <thead class={cn("[&_tr]:border-b", local.class)} {...rest}>{local.children}</thead>;
-};
+const TableHeader: Component<ComponentProps<"thead">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
+  return <thead class={cn("[&_tr]:border-b", local.class)} {...others} />
+}
 
-export const TBody: ParentComponent<JSX.HTMLAttributes<HTMLTableSectionElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
-  return <tbody class={cn("[&_tr:last-child]:border-0", local.class)} {...rest}>{local.children}</tbody>;
-};
+const TableBody: Component<ComponentProps<"tbody">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
+  return <tbody class={cn("[&_tr:last-child]:border-0", local.class)} {...others} />
+}
 
-export const Tr: ParentComponent<JSX.HTMLAttributes<HTMLTableRowElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
+const TableFooter: Component<ComponentProps<"tfoot">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
   return (
-    <tr class={cn("border-b border-border transition-colors hover:bg-secondary/30", local.class)} {...rest}>
-      {local.children}
-    </tr>
-  );
-};
+    <tfoot class={cn("bg-primary font-medium text-primary-foreground", local.class)} {...others} />
+  )
+}
 
-export const Th: ParentComponent<JSX.ThHTMLAttributes<HTMLTableCellElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
+const TableRow: Component<ComponentProps<"tr">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <tr
+      class={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        local.class
+      )}
+      {...others}
+    />
+  )
+}
+
+const TableHead: Component<ComponentProps<"th">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
   return (
     <th
       class={cn(
-        "h-10 px-4 text-left align-middle text-xs font-medium uppercase tracking-wider text-muted-foreground",
-        local.class,
+        "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        local.class
       )}
-      {...rest}
-    >
-      {local.children}
-    </th>
-  );
-};
+      {...others}
+    />
+  )
+}
 
-export const Td: ParentComponent<JSX.TdHTMLAttributes<HTMLTableCellElement>> = (props) => {
-  const [local, rest] = splitProps(props, ["class", "children"]);
-  return <td class={cn("p-4 align-middle", local.class)} {...rest}>{local.children}</td>;
-};
+const TableCell: Component<ComponentProps<"td">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <td class={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0", local.class)} {...others} />
+  )
+}
+
+const TableCaption: Component<ComponentProps<"caption">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
+  return <caption class={cn("mt-4 text-sm text-muted-foreground", local.class)} {...others} />
+}
+
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption }
