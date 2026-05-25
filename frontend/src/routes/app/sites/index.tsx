@@ -3,23 +3,10 @@ import { Title } from "@solidjs/meta";
 import { A, useNavigate } from "@solidjs/router";
 import { Button } from "~/components/ui/button";
 import { TextField, TextFieldInput } from "~/components/ui/text-field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Card } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -62,14 +49,22 @@ const SitesPage: Component = () => {
   const filtered = createMemo(() => {
     const list = keys() ?? [];
     const q = search().toLowerCase().trim();
+    const s = sort();
     const out = q ? list.filter((k) => k.site_key.toLowerCase().includes(q)) : [...list];
     out.sort((a, b) => {
-      switch (sort()) {
-        case "pv-desc": return (b.site_pv || 0) - (a.site_pv || 0);
-        case "pv-asc": return (a.site_pv || 0) - (b.site_pv || 0);
-        case "uv-desc": return (b.site_uv || 0) - (a.site_uv || 0);
-        case "uv-asc": return (a.site_uv || 0) - (b.site_uv || 0);
-        case "key-asc": return a.site_key.localeCompare(b.site_key);
+      switch (s) {
+        case "pv-desc":
+          return (b.site_pv || 0) - (a.site_pv || 0);
+        case "pv-asc":
+          return (a.site_pv || 0) - (b.site_pv || 0);
+        case "uv-desc":
+          return (b.site_uv || 0) - (a.site_uv || 0);
+        case "uv-asc":
+          return (a.site_uv || 0) - (b.site_uv || 0);
+        case "key-asc":
+          return a.site_key.localeCompare(b.site_key);
+        default:
+          return 0;
       }
     });
     return out;
@@ -77,7 +72,9 @@ const SitesPage: Component = () => {
 
   const totalPages = createMemo(() => Math.max(1, Math.ceil(filtered().length / SITE_PAGE_SIZE)));
   const paged = createMemo(() => filtered().slice((page() - 1) * SITE_PAGE_SIZE, page() * SITE_PAGE_SIZE));
-  const allSelected = createMemo(() => paged().length > 0 && paged().every((s) => selected().includes(s.site_key)));
+  const allSelected = createMemo(
+    () => paged().length > 0 && paged().every((s) => selected().includes(s.site_key)),
+  );
 
   function toggle(key: string) {
     setSelected((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
@@ -86,7 +83,9 @@ const SitesPage: Component = () => {
     if (allSelected()) {
       setSelected((cur) => cur.filter((k) => !paged().some((s) => s.site_key === k)));
     } else {
-      const add = paged().map((s) => s.site_key).filter((k) => !selected().includes(k));
+      const add = paged()
+        .map((s) => s.site_key)
+        .filter((k) => !selected().includes(k));
       setSelected((cur) => [...cur, ...add]);
     }
   }
@@ -111,7 +110,10 @@ const SitesPage: Component = () => {
       <div class="mb-4 flex flex-wrap items-center gap-2">
         <TextField
           value={search()}
-          onChange={(v) => { setSearch(v); setPage(1); }}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
           class="flex-1 min-w-[220px] max-w-md"
         >
           <TextFieldInput placeholder={t("sites.search_placeholder")} />
@@ -127,14 +129,20 @@ const SitesPage: Component = () => {
           )}
         >
           <SelectTrigger class="w-32">
-            <SelectValue<Sort>>{(s) => sortOptions.find((o) => o.value === s.selectedOption())?.label()}</SelectValue>
+            <SelectValue<Sort>>
+              {(s) => sortOptions.find((o) => o.value === s.selectedOption())?.label()}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent />
         </Select>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>{t("common.refresh")}</Button>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          {t("common.refresh")}
+        </Button>
         <Show when={selected().length > 0}>
           <div class="ml-auto flex items-center gap-2 text-xs">
-            <span class="text-muted-foreground">{selected().length} {t("sites.selected")}</span>
+            <span class="text-muted-foreground">
+              {selected().length} {t("sites.selected")}
+            </span>
             <Button variant="destructive" size="sm" onClick={() => setConfirmBatch(true)}>
               {t("sites.batch_delete")}
             </Button>
@@ -162,7 +170,9 @@ const SitesPage: Component = () => {
                 <For each={[1, 2, 3, 4]}>
                   {() => (
                     <TableRow>
-                      <TableCell colSpan={5}><Skeleton class="h-6 w-full" /></TableCell>
+                      <TableCell colSpan={5}>
+                        <Skeleton class="h-6 w-full" />
+                      </TableCell>
                     </TableRow>
                   )}
                 </For>
@@ -172,7 +182,9 @@ const SitesPage: Component = () => {
                 when={paged().length > 0}
                 fallback={
                   <TableRow>
-                    <TableCell colSpan={5} class="py-12 text-center text-muted-foreground">{t("sites.empty")}</TableCell>
+                    <TableCell colSpan={5} class="py-12 text-center text-muted-foreground">
+                      {t("sites.empty")}
+                    </TableCell>
                   </TableRow>
                 }
               >
@@ -180,12 +192,12 @@ const SitesPage: Component = () => {
                   {(s) => (
                     <TableRow
                       class="cursor-pointer"
-                      onClick={(e: any) => {
+                      onClick={(e: MouseEvent) => {
                         if ((e.target as HTMLElement).tagName === "INPUT") return;
                         navigate(`/app/sites/${encodeURIComponent(s.site_key)}`);
                       }}
                     >
-                      <TableCell onClick={(e: any) => e.stopPropagation()}>
+                      <TableCell onClick={(e: MouseEvent) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected().includes(s.site_key)}
@@ -193,10 +205,17 @@ const SitesPage: Component = () => {
                         />
                       </TableCell>
                       <TableCell class="font-mono text-sm">{s.site_key}</TableCell>
-                      <TableCell class="text-right tabular-nums">{(s.site_pv ?? 0).toLocaleString()}</TableCell>
-                      <TableCell class="text-right tabular-nums">{(s.site_uv ?? 0).toLocaleString()}</TableCell>
+                      <TableCell class="text-right tabular-nums">
+                        {(s.site_pv ?? 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell class="text-right tabular-nums">
+                        {(s.site_uv ?? 0).toLocaleString()}
+                      </TableCell>
                       <TableCell class="text-right text-primary">
-                        <A href={`/app/sites/${encodeURIComponent(s.site_key)}`} onClick={(e) => e.stopPropagation()}>
+                        <A
+                          href={`/app/sites/${encodeURIComponent(s.site_key)}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           →
                         </A>
                       </TableCell>
@@ -208,13 +227,22 @@ const SitesPage: Component = () => {
           </TableBody>
         </Table>
         <div class="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
-          <span>{filtered().length} {t("nav.sites")}</span>
+          <span>
+            {filtered().length} {t("nav.sites")}
+          </span>
           <div class="flex items-center gap-2">
             <Button size="sm" variant="ghost" disabled={page() <= 1} onClick={() => setPage((p) => p - 1)}>
               {t("common.prev")}
             </Button>
-            <span>{page()} / {totalPages()}</span>
-            <Button size="sm" variant="ghost" disabled={page() >= totalPages()} onClick={() => setPage((p) => p + 1)}>
+            <span>
+              {page()} / {totalPages()}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page() >= totalPages()}
+              onClick={() => setPage((p) => p + 1)}
+            >
               {t("common.next")}
             </Button>
           </div>
@@ -230,8 +258,12 @@ const SitesPage: Component = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmBatch(false)}>{t("common.cancel")}</Button>
-            <Button variant="destructive" onClick={doBatchDelete}>{t("common.confirm")}</Button>
+            <Button variant="ghost" onClick={() => setConfirmBatch(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={doBatchDelete}>
+              {t("common.confirm")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

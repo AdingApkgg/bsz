@@ -53,7 +53,9 @@ const Logs: Component = () => {
       <Title>{t("logs.title")} · Busuanzi</Title>
       <div class="mb-4 flex items-center justify-between">
         <h1 class="text-2xl font-semibold tracking-tight">{t("logs.title")}</h1>
-        <Button size="sm" variant="outline" onClick={() => refetch()}>{t("common.refresh")}</Button>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          {t("common.refresh")}
+        </Button>
       </div>
 
       <Card>
@@ -73,7 +75,9 @@ const Logs: Component = () => {
                 <For each={[1, 2, 3, 4, 5]}>
                   {() => (
                     <TableRow>
-                      <TableCell colSpan={4}><Skeleton class="h-6 w-full" /></TableCell>
+                      <TableCell colSpan={4}>
+                        <Skeleton class="h-6 w-full" />
+                      </TableCell>
                     </TableRow>
                   )}
                 </For>
@@ -83,19 +87,23 @@ const Logs: Component = () => {
                 when={(data()?.rows.length ?? 0) > 0}
                 fallback={
                   <TableRow>
-                    <TableCell colSpan={4} class="py-12 text-center text-muted-foreground">{t("logs.empty")}</TableCell>
+                    <TableCell colSpan={4} class="py-12 text-center text-muted-foreground">
+                      {t("logs.empty")}
+                    </TableCell>
                   </TableRow>
                 }
               >
                 <For each={data()?.rows}>
                   {(l) => (
                     <TableRow>
-                      <TableCell class="font-mono text-xs text-muted-foreground tabular-nums">{l.timestamp}</TableCell>
+                      <TableCell class="font-mono text-xs text-muted-foreground tabular-nums">
+                        {l.timestamp}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={actionVariant(l.action)}>{actionLabel(l.action)}</Badge>
                       </TableCell>
                       <TableCell class="font-mono text-xs text-muted-foreground" title={l.detail}>
-                        {l.detail.length > 80 ? l.detail.slice(0, 77) + "…" : l.detail}
+                        {l.detail.length > 80 ? `${l.detail.slice(0, 77)}…` : l.detail}
                       </TableCell>
                       <TableCell class="font-mono text-xs text-muted-foreground">{l.ip}</TableCell>
                     </TableRow>
@@ -111,8 +119,15 @@ const Logs: Component = () => {
             <Button size="sm" variant="ghost" disabled={page() <= 1} onClick={() => setPage((p) => p - 1)}>
               {t("common.prev")}
             </Button>
-            <span>{page()} / {totalPages()}</span>
-            <Button size="sm" variant="ghost" disabled={page() >= totalPages()} onClick={() => setPage((p) => p + 1)}>
+            <span>
+              {page()} / {totalPages()}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page() >= totalPages()}
+              onClick={() => setPage((p) => p + 1)}
+            >
               {t("common.next")}
             </Button>
           </div>

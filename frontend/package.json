@@ -7,7 +7,12 @@
     "dev": "vinxi dev --port 12705",
     "build": "vinxi build && bun scripts/postbuild.ts",
     "preview": "vinxi start --port 12705",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint . && eslint . --max-warnings=0",
+    "lint:fix": "biome lint --write . && eslint . --fix",
+    "check": "bun run format:check && bun run lint && bun run typecheck"
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
@@ -27,11 +32,17 @@
     "vinxi": "^0.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
     "autoprefixer": "^10.4.20",
+    "eslint": "^10.4.0",
+    "eslint-plugin-solid": "^0.14.5",
+    "globals": "^17.6.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.59.4"
   },
   "engines": {
     "node": ">=18"

@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { TextField, TextFieldInput, TextFieldLabel } from "~/components/ui/text-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { addConnection, testConnection, verifyToken, activeConnection } from "~/lib/connections";
-import { setLocale, locale, t, toggleLocale } from "~/lib/i18n";
+import { locale, t, toggleLocale } from "~/lib/i18n";
 import { toast } from "solid-sonner";
 
 const Welcome: Component = () => {
@@ -30,7 +30,13 @@ const Welcome: Component = () => {
         const v = await verifyToken({ baseUrl: url, token: token().trim() });
         setTest(v);
       } else {
-        setTest({ ok: true, message: locale() === "zh" ? "可达（token 未填，admin 不可用）" : "Reachable (admin disabled without token)" });
+        setTest({
+          ok: true,
+          message:
+            locale() === "zh"
+              ? "可达（token 未填，admin 不可用）"
+              : "Reachable (admin disabled without token)",
+        });
       }
     } finally {
       setBusy(false);
@@ -53,10 +59,14 @@ const Welcome: Component = () => {
     <main class="min-h-screen bg-background">
       <Title>Busuanzi · {t("welcome.no_conn_title")}</Title>
       <div class="absolute right-4 top-4 flex items-center gap-2">
-        <Button size="sm" variant="ghost" onClick={toggleLocale}>{locale() === "zh" ? "EN" : "中文"}</Button>
+        <Button size="sm" variant="ghost" onClick={toggleLocale}>
+          {locale() === "zh" ? "EN" : "中文"}
+        </Button>
         <Show when={activeConnection()}>
           <A href="/app/overview">
-            <Button size="sm" variant="outline">{t("welcome.continue")}</Button>
+            <Button size="sm" variant="outline">
+              {t("welcome.continue")}
+            </Button>
           </A>
         </Show>
       </div>
@@ -105,7 +115,8 @@ const Welcome: Component = () => {
                       : "border-destructive/30 bg-destructive/10 text-destructive")
                   }
                 >
-                  {r().ok ? "✓ " : "✗ "}{r().message}
+                  {r().ok ? "✓ " : "✗ "}
+                  {r().message}
                 </div>
               )}
             </Show>
@@ -128,9 +139,15 @@ const Welcome: Component = () => {
               : "Frontend is pure static — deploy to GitHub Pages, Cloudflare Pages, or any static host."}
           </p>
           <p class="mt-1">
-            <a href="https://github.com/AdingApkgg/bsz" rel="noopener" class="hover:text-foreground">GitHub</a>
+            <a href="https://github.com/AdingApkgg/bsz" rel="noopener" class="hover:text-foreground">
+              GitHub
+            </a>
             <span class="mx-1.5">·</span>
-            <a href="https://github.com/AdingApkgg/bsz/tree/main/backend" rel="noopener" class="hover:text-foreground">
+            <a
+              href="https://github.com/AdingApkgg/bsz/tree/main/backend"
+              rel="noopener"
+              class="hover:text-foreground"
+            >
               {locale() === "zh" ? "后端文档" : "Backend docs"}
             </a>
           </p>

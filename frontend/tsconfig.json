@@ -11,6 +11,13 @@
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
     "types": ["vinxi/types/client"],
     "baseUrl": ".",
     "paths": {

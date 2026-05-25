@@ -28,11 +28,17 @@ export async function runUndo() {
   const e = entry();
   if (!e) return;
   setEntry(null);
-  if (timer) { clearTimeout(timer); timer = null; }
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
   await e.undo();
 }
 
 export function dismissUndo() {
   setEntry(null);
-  if (timer) { clearTimeout(timer); timer = null; }
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
 }

@@ -51,7 +51,7 @@ const items: Item[] = [
 
 const Sidebar: Component = () => {
   const loc = useLocation();
-  const isActive = (href: string) => loc.pathname === href || loc.pathname.startsWith(href + "/");
+  const isActive = (href: string) => loc.pathname === href || loc.pathname.startsWith(`${href}/`);
   return (
     <aside class="flex h-full w-56 flex-col border-r border-border bg-card/40 px-3 py-4 lt-md:hidden">
       <div class="mb-5 flex items-center gap-2 px-2">
@@ -79,7 +79,10 @@ const Sidebar: Component = () => {
         </For>
       </nav>
       <div class="mt-auto px-2 text-[10px] text-muted-foreground/70">
-        v0.1.0 · <a href="https://github.com/AdingApkgg/bsz" rel="noopener" class="hover:text-foreground">GitHub</a>
+        v0.1.0 ·{" "}
+        <a href="https://github.com/AdingApkgg/bsz" rel="noopener" class="hover:text-foreground">
+          GitHub
+        </a>
       </div>
     </aside>
   );

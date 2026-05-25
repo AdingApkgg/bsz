@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, For, Show, onCleanup, onMount, type Component } from "solid-js";
+import { createResource, createSignal, For, Show, onCleanup, onMount, type Component } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import {
   CommandDialog,

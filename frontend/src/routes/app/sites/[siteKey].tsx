@@ -8,7 +8,14 @@ import { TextField, TextFieldInput, TextFieldLabel } from "~/components/ui/text-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Separator } from "~/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { api, type PageInfo, type SiteKey } from "~/lib/api";
 import { activeConnection } from "~/lib/connections";
 import { offerUndo } from "~/lib/undo";
@@ -38,22 +45,29 @@ const SiteDetail: Component = () => {
   const [pv, setPv] = createSignal<number | null>(null);
   const [uv, setUv] = createSignal<number | null>(null);
 
-  function getPv(): number { return pv() ?? siteRow()?.site_pv ?? 0; }
-  function getUv(): number { return uv() ?? siteRow()?.site_uv ?? 0; }
+  function getPv(): number {
+    return pv() ?? siteRow()?.site_pv ?? 0;
+  }
+  function getUv(): number {
+    return uv() ?? siteRow()?.site_uv ?? 0;
+  }
 
   async function saveField(kind: "site_pv" | "site_uv", value: number) {
-    const old = kind === "site_pv" ? siteRow()?.site_pv ?? 0 : siteRow()?.site_uv ?? 0;
+    const old = kind === "site_pv" ? (siteRow()?.site_pv ?? 0) : (siteRow()?.site_uv ?? 0);
     if (value === old) return;
     try {
       await api.post("/keys/update", { site_key: siteKey(), key_type: kind, value });
       toast.success(t("common.success"));
-      offerUndo(`${kind === "site_pv" ? "PV" : "UV"}: ${old.toLocaleString()} → ${value.toLocaleString()}`, async () => {
-        await api.post("/keys/update", { site_key: siteKey(), key_type: kind, value: old });
-        toast.success(t("common.undo"));
-        if (kind === "site_pv") setPv(null);
-        else setUv(null);
-        refetchSite();
-      });
+      offerUndo(
+        `${kind === "site_pv" ? "PV" : "UV"}: ${old.toLocaleString()} → ${value.toLocaleString()}`,
+        async () => {
+          await api.post("/keys/update", { site_key: siteKey(), key_type: kind, value: old });
+          toast.success(t("common.undo"));
+          if (kind === "site_pv") setPv(null);
+          else setUv(null);
+          refetchSite();
+        },
+      );
       refetchSite();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "save failed");
@@ -130,7 +144,9 @@ const SiteDetail: Component = () => {
 
   async function deletePage(p: PageInfo) {
     try {
-      await api.delete(`/keys?site_key=${encodeURIComponent(siteKey())}&page_key=${encodeURIComponent(p.page_key)}`);
+      await api.delete(
+        `/keys?site_key=${encodeURIComponent(siteKey())}&page_key=${encodeURIComponent(p.page_key)}`,
+      );
       toast.success(t("common.success"));
       refetchPages();
     } catch (e: unknown) {
@@ -142,14 +158,18 @@ const SiteDetail: Component = () => {
     <div class="px-6 py-6 lt-md:px-4">
       <Title>{siteKey()} · Busuanzi</Title>
       <div class="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-        <A href="/app/sites" class="hover:text-foreground">{t("site.back")}</A>
+        <A href="/app/sites" class="hover:text-foreground">
+          {t("site.back")}
+        </A>
         <span>/</span>
         <span class="font-mono text-foreground">{siteKey()}</span>
       </div>
 
       <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
-          <CardHeader class="pb-2"><CardTitle class="text-sm text-muted-foreground">{t("site.edit_pv")}</CardTitle></CardHeader>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-sm text-muted-foreground">{t("site.edit_pv")}</CardTitle>
+          </CardHeader>
           <CardContent>
             <Show when={!siteRow.loading} fallback={<Skeleton class="h-9 w-24" />}>
               <input
@@ -164,7 +184,9 @@ const SiteDetail: Component = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader class="pb-2"><CardTitle class="text-sm text-muted-foreground">{t("site.edit_uv")}</CardTitle></CardHeader>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-sm text-muted-foreground">{t("site.edit_uv")}</CardTitle>
+          </CardHeader>
           <CardContent>
             <Show when={!siteRow.loading} fallback={<Skeleton class="h-9 w-24" />}>
               <input
@@ -179,7 +201,9 @@ const SiteDetail: Component = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader class="pb-2"><CardTitle class="text-sm text-muted-foreground">{t("site.pages")}</CardTitle></CardHeader>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-sm text-muted-foreground">{t("site.pages")}</CardTitle>
+          </CardHeader>
           <CardContent>
             <div class="text-2xl font-semibold tabular-nums">{(pages()?.length ?? 0).toLocaleString()}</div>
             <div class="mt-0.5 text-xs text-muted-foreground">Σ {totalPagesPv().toLocaleString()} PV</div>
@@ -206,7 +230,11 @@ const SiteDetail: Component = () => {
                 fallback={
                   <For each={[1, 2, 3]}>
                     {() => (
-                      <TableRow><TableCell colSpan={3}><Skeleton class="h-6 w-full" /></TableCell></TableRow>
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <Skeleton class="h-6 w-full" />
+                        </TableCell>
+                      </TableRow>
                     )}
                   </For>
                 }
@@ -215,14 +243,18 @@ const SiteDetail: Component = () => {
                   when={(pages()?.length ?? 0) > 0}
                   fallback={
                     <TableRow>
-                      <TableCell colSpan={3} class="py-8 text-center text-muted-foreground">{t("sites.empty")}</TableCell>
+                      <TableCell colSpan={3} class="py-8 text-center text-muted-foreground">
+                        {t("sites.empty")}
+                      </TableCell>
                     </TableRow>
                   }
                 >
                   <For each={pages() ?? []}>
                     {(p) => (
                       <TableRow>
-                        <TableCell class="font-mono text-xs" title={p.path}>{p.path}</TableCell>
+                        <TableCell class="font-mono text-xs" title={p.path}>
+                          {p.path}
+                        </TableCell>
                         <TableCell class="text-right tabular-nums">{p.pv.toLocaleString()}</TableCell>
                         <TableCell class="text-right">
                           <Button
@@ -235,7 +267,12 @@ const SiteDetail: Component = () => {
                           >
                             {t("common.confirm")}
                           </Button>
-                          <Button size="sm" variant="ghost" class="text-destructive" onClick={() => deletePage(p)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            class="text-destructive"
+                            onClick={() => deletePage(p)}
+                          >
                             {t("common.delete")}
                           </Button>
                         </TableCell>
@@ -258,10 +295,24 @@ const SiteDetail: Component = () => {
         <CardContent class="space-y-3">
           <p class="text-xs text-muted-foreground">{t("site.danger_hint")}</p>
           <div class="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setNewKey(""); setRenameOpen(true); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNewKey("");
+                setRenameOpen(true);
+              }}
+            >
               {t("site.rename")}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => { setMergeTarget(""); setMergeOpen(true); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setMergeTarget("");
+                setMergeOpen(true);
+              }}
+            >
               {t("site.merge")}
             </Button>
             <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
@@ -283,11 +334,15 @@ const SiteDetail: Component = () => {
             <TextFieldInput
               type="number"
               value={editingPv()}
-              onInput={(e: any) => setEditingPv(+e.currentTarget.value)}
+              onInput={(e: InputEvent & { currentTarget: HTMLInputElement }) =>
+                setEditingPv(+e.currentTarget.value)
+              }
             />
           </TextField>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditingPage(null)}>{t("common.cancel")}</Button>
+            <Button variant="ghost" onClick={() => setEditingPage(null)}>
+              {t("common.cancel")}
+            </Button>
             <Button onClick={savePageEdit}>{t("common.save")}</Button>
           </DialogFooter>
         </DialogContent>
@@ -305,7 +360,9 @@ const SiteDetail: Component = () => {
             <TextFieldInput placeholder="example.com" />
           </TextField>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenameOpen(false)}>{t("common.cancel")}</Button>
+            <Button variant="ghost" onClick={() => setRenameOpen(false)}>
+              {t("common.cancel")}
+            </Button>
             <Button onClick={doRename}>{t("common.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
@@ -316,16 +373,16 @@ const SiteDetail: Component = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("site.merge")}</DialogTitle>
-            <DialogDescription>
-              {siteKey()} → ?
-            </DialogDescription>
+            <DialogDescription>{siteKey()} → ?</DialogDescription>
           </DialogHeader>
           <TextField value={mergeTarget()} onChange={setMergeTarget}>
             <TextFieldLabel>{t("conn.name")}</TextFieldLabel>
             <TextFieldInput placeholder="example.com" />
           </TextField>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setMergeOpen(false)}>{t("common.cancel")}</Button>
+            <Button variant="ghost" onClick={() => setMergeOpen(false)}>
+              {t("common.cancel")}
+            </Button>
             <Button onClick={doMerge}>{t("common.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
@@ -336,11 +393,17 @@ const SiteDetail: Component = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("site.delete")}</DialogTitle>
-            <DialogDescription>{siteKey()} — {t("site.danger_hint")}</DialogDescription>
+            <DialogDescription>
+              {siteKey()} — {t("site.danger_hint")}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>{t("common.cancel")}</Button>
-            <Button variant="destructive" onClick={doDelete}>{t("common.confirm")}</Button>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={doDelete}>
+              {t("common.confirm")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -15,9 +15,8 @@ const [theme, setThemeSignal] = createSignal<Theme>(read());
 function apply(t: Theme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  const resolved = t === "system"
-    ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-    : t;
+  const resolved =
+    t === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : t;
   root.classList.toggle("dark", resolved === "dark");
   root.classList.toggle("light", resolved === "light");
   root.style.colorScheme = resolved;

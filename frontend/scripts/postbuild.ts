@@ -20,5 +20,3 @@ if (!existsSync(indexHtml)) {
 copyFileSync(indexHtml, join(OUT, "404.html"));
 writeFileSync(join(OUT, "_redirects"), "/* /index.html 200\n");
 writeFileSync(join(OUT, ".nojekyll"), "");
-
-console.log("[postbuild] wrote 404.html, _redirects, .nojekyll");

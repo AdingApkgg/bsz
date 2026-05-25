@@ -1,6 +1,6 @@
 import { For, Show, createSignal, type Component } from "solid-js";
 import { activeConnection, connections, setActive } from "~/lib/connections";
-import { locale, t, toggleLocale } from "~/lib/i18n";
+import { type DictKey, locale, t, toggleLocale } from "~/lib/i18n";
 import { theme, setTheme, type Theme } from "~/lib/theme";
 import { Button } from "~/components/ui/button";
 import {
@@ -23,10 +23,11 @@ const TopBar: Component<Props> = (props) => {
       <button
         type="button"
         class="flex h-8 flex-1 max-w-md items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs text-muted-foreground transition-colors hover:bg-card"
-        onClick={props.onOpenCommand}
+        onClick={() => props.onOpenCommand()}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-3.5">
-          <circle cx="11" cy="11" r="7" /><path d="m16.65 16.65 4 4" stroke-linecap="round" />
+          <circle cx="11" cy="11" r="7" />
+          <path d="m16.65 16.65 4 4" stroke-linecap="round" />
         </svg>
         <span class="flex-1 text-left">{t("top.search")}</span>
         <kbd class="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
@@ -45,7 +46,9 @@ const TopBar: Component<Props> = (props) => {
 
       <Show when={!active()}>
         <A href="/welcome">
-          <Button size="sm" variant="outline" class="h-8">{t("top.add_connection")}</Button>
+          <Button size="sm" variant="outline" class="h-8">
+            {t("top.add_connection")}
+          </Button>
         </A>
       </Show>
     </header>
@@ -58,16 +61,21 @@ const ConnectionMenu: Component = () => {
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
       <DropdownMenuTrigger
+        // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
         as={(p: any) => (
           <button
             {...p}
             class="flex h-8 items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs transition-colors hover:bg-card"
           >
             <span class="inline-block size-2 rounded-full bg-primary" />
-            <span class="max-w-[160px] truncate">
-              {active()?.name ?? t("top.no_connection")}
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-3 opacity-60">
+            <span class="max-w-[160px] truncate">{active()?.name ?? t("top.no_connection")}</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="size-3 opacity-60"
+            >
               <path d="m6 9 6 6 6-6" stroke-linecap="round" />
             </svg>
           </button>
@@ -79,10 +87,7 @@ const ConnectionMenu: Component = () => {
         </DropdownMenuLabel>
         <For each={connections()}>
           {(c) => (
-            <DropdownMenuItem
-              onSelect={() => setActive(c.id)}
-              class="flex items-center justify-between"
-            >
+            <DropdownMenuItem onSelect={() => setActive(c.id)} class="flex items-center justify-between">
               <div class="min-w-0 flex-1">
                 <div class="truncate text-sm">{c.name}</div>
                 <div class="truncate font-mono text-[10px] text-muted-foreground">{c.baseUrl}</div>
@@ -106,14 +111,15 @@ const ConnectionMenu: Component = () => {
 };
 
 const ThemeMenu: Component = () => {
-  const labels: Record<Theme, string> = {
-    system: "theme.system" as any,
-    light: "theme.light" as any,
-    dark: "theme.dark" as any,
+  const labels: Record<Theme, DictKey> = {
+    system: "theme.system",
+    light: "theme.light",
+    dark: "theme.dark",
   };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
         as={(p: any) => (
           <Button {...p} size="sm" variant="ghost" class="h-8 w-8 p-0" title={t("top.theme")}>
             <Show when={theme() === "dark"} fallback={<SunIcon />}>
@@ -126,7 +132,7 @@ const ThemeMenu: Component = () => {
         <For each={["system", "light", "dark"] as Theme[]}>
           {(v) => (
             <DropdownMenuItem onSelect={() => setTheme(v)}>
-              <span class="flex-1">{t(labels[v] as any)}</span>
+              <span class="flex-1">{t(labels[v])}</span>
               <Show when={theme() === v}>
                 <span class="text-primary">●</span>
               </Show>
@@ -142,7 +148,10 @@ function SunIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
       <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke-linecap="round" />
+      <path
+        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+        stroke-linecap="round"
+      />
     </svg>
   );
 }

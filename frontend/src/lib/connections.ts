@@ -28,13 +28,14 @@ function loadAndSeed(): { list: Connection[]; active: string | null } {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const storedActive = localStorage.getItem(ACTIVE_KEY);
-        const active = storedActive && parsed.some((c: Connection) => c.id === storedActive)
-          ? storedActive
-          : parsed[0].id;
+        const active =
+          storedActive && parsed.some((c: Connection) => c.id === storedActive) ? storedActive : parsed[0].id;
         return { list: parsed, active };
       }
     }
-  } catch {}
+  } catch {
+    // localStorage may be corrupt or unparseable — fall through to seeding.
+  }
   // Seed from env var on first run, and persist so the IDs stay stable
   // across reloads / signal re-reads.
   if (ENV_DEFAULT) {
@@ -99,7 +100,9 @@ export function deleteConnection(id: string) {
 }
 
 /// Lightweight reachability test — calls /ping (public) so it works regardless of token.
-export async function testConnection(c: Pick<Connection, "baseUrl">): Promise<{ ok: boolean; message: string }> {
+export async function testConnection(
+  c: Pick<Connection, "baseUrl">,
+): Promise<{ ok: boolean; message: string }> {
   try {
     const res = await fetch(`${normalize(c.baseUrl)}/ping`, { method: "GET" });
     if (res.ok) {
@@ -113,7 +116,9 @@ export async function testConnection(c: Pick<Connection, "baseUrl">): Promise<{ 
 }
 
 /// Check whether the configured token works for /api/admin/stats.
-export async function verifyToken(c: Pick<Connection, "baseUrl" | "token">): Promise<{ ok: boolean; message: string }> {
+export async function verifyToken(
+  c: Pick<Connection, "baseUrl" | "token">,
+): Promise<{ ok: boolean; message: string }> {
   if (!c.token) return { ok: false, message: "token 为空" };
   try {
     const res = await fetch(`${normalize(c.baseUrl)}/api/admin/stats`, {

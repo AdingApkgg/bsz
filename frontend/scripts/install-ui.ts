@@ -65,8 +65,6 @@ async function main() {
   const requested = args.includes("--all") ? index.map((e) => e.name) : args;
   const tree = resolveTree(index, requested);
 
-  console.log(`Resolved ${tree.length} component(s): ${tree.map((t) => t.name).join(", ")}`);
-
   const allDeps = new Set<string>();
   for (const entry of tree) {
     const item = await getItem(entry.name);
@@ -78,7 +76,6 @@ async function main() {
       // we want `~/components/ui` (the alias we configured in ui.config.json).
       const content = file.content.replaceAll("~/registry/ui", "~/components/ui");
       await writeFile(target, content);
-      console.log(`  + ${file.name}`);
     }
     for (const d of item.dependencies ?? []) {
       const trimmed = d.trim();
@@ -88,11 +85,8 @@ async function main() {
 
   if (allDeps.size > 0) {
     const list = [...allDeps];
-    console.log(`Installing deps: ${list.join(" ")}`);
     await $`bun add ${list}`.cwd(resolve(import.meta.dir, ".."));
   }
-
-  console.log("Done.");
 }
 
 main().catch((e) => {

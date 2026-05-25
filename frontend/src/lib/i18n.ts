@@ -25,7 +25,10 @@ const dict = {
 
   // welcome
   "welcome.title": { zh: "Busuanzi", en: "Busuanzi" },
-  "welcome.subtitle": { zh: "网站访客统计 · 自托管 · 单二进制", en: "Self-hosted visitor counter · single binary" },
+  "welcome.subtitle": {
+    zh: "网站访客统计 · 自托管 · 单二进制",
+    en: "Self-hosted visitor counter · single binary",
+  },
   "welcome.no_conn_title": { zh: "添加第一个后端连接", en: "Add your first backend" },
   "welcome.no_conn_body": {
     zh: "前端纯静态，需要指向你的 busuanzi 后端地址。后端 ADMIN_TOKEN 设了之后才能管理数据。",
@@ -64,7 +67,10 @@ const dict = {
   "site.delete": { zh: "删除站点", en: "Delete site" },
   "site.pages": { zh: "页面", en: "Pages" },
   "site.danger": { zh: "危险操作", en: "Danger zone" },
-  "site.danger_hint": { zh: "重命名/合并/删除不可撤销（仅编辑 PV/UV 可 undo）", en: "Rename/merge/delete are irreversible (only PV/UV edits support undo)" },
+  "site.danger_hint": {
+    zh: "重命名/合并/删除不可撤销（仅编辑 PV/UV 可 undo）",
+    en: "Rename/merge/delete are irreversible (only PV/UV edits support undo)",
+  },
 
   // logs
   "logs.title": { zh: "操作日志", en: "Activity log" },

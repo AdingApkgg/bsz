@@ -1,3 +1,4 @@
+import type { TooltipItem } from "chart.js";
 import { Show, createMemo, createResource, For, type Component } from "solid-js";
 import { Title } from "@solidjs/meta";
 import { A } from "@solidjs/router";
@@ -37,7 +38,7 @@ const Overview: Component = () => {
   );
 
   const barData = createMemo(() => ({
-    labels: top().map((s) => (s.site_key.length > 18 ? s.site_key.slice(0, 16) + "…" : s.site_key)),
+    labels: top().map((s) => (s.site_key.length > 18 ? `${s.site_key.slice(0, 16)}…` : s.site_key)),
     datasets: [
       {
         label: "PV",
@@ -51,8 +52,19 @@ const Overview: Component = () => {
   const donutData = createMemo(() => {
     const arr = top();
     const others = (keys() ?? []).slice(10).reduce((s, k) => s + (k.site_pv || 0), 0);
-    const colors = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#06b6d4", "#8b5cf6"];
-    const labels = arr.map((k) => (k.site_key.length > 14 ? k.site_key.slice(0, 12) + "…" : k.site_key));
+    const colors = [
+      "#3b82f6",
+      "#22c55e",
+      "#eab308",
+      "#ef4444",
+      "#a855f7",
+      "#ec4899",
+      "#14b8a6",
+      "#f97316",
+      "#06b6d4",
+      "#8b5cf6",
+    ];
+    const labels = arr.map((k) => (k.site_key.length > 14 ? `${k.site_key.slice(0, 12)}…` : k.site_key));
     const data = arr.map((k) => k.site_pv || 0);
     if (others > 0) {
       labels.push(locale() === "zh" ? "其他" : "Other");
@@ -70,7 +82,9 @@ const Overview: Component = () => {
       <Title>{t("overview.title")} · Busuanzi</Title>
       <div class="mb-6">
         <h1 class="text-2xl font-semibold tracking-tight">{t("overview.title")}</h1>
-        <p class="text-sm text-muted-foreground">{c()?.name} · <code class="font-mono">{c()?.baseUrl}</code></p>
+        <p class="text-sm text-muted-foreground">
+          {c()?.name} · <code class="font-mono">{c()?.baseUrl}</code>
+        </p>
       </div>
 
       <Show when={!hasToken()}>
@@ -79,7 +93,9 @@ const Overview: Component = () => {
             {locale() === "zh"
               ? "当前连接未配置 admin token，无法查看统计数据。"
               : "This connection has no admin token configured."}
-            <A href="/app/settings" class="ml-2 text-primary underline">{t("settings.connections")}</A>
+            <A href="/app/settings" class="ml-2 text-primary underline">
+              {t("settings.connections")}
+            </A>
           </CardContent>
         </Card>
       </Show>
@@ -87,8 +103,16 @@ const Overview: Component = () => {
       <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label={t("overview.sites")} loading={stats.loading} value={fmt(stats()?.total_sites)} />
         <StatTile label={t("overview.pages")} loading={stats.loading} value={fmt(stats()?.total_pages)} />
-        <StatTile label={t("overview.total_pv")} loading={stats.loading} value={fmt(stats()?.total_site_pv)} />
-        <StatTile label={t("overview.total_uv")} loading={stats.loading} value={fmt(stats()?.total_site_uv)} />
+        <StatTile
+          label={t("overview.total_pv")}
+          loading={stats.loading}
+          value={fmt(stats()?.total_site_pv)}
+        />
+        <StatTile
+          label={t("overview.total_uv")}
+          loading={stats.loading}
+          value={fmt(stats()?.total_site_uv)}
+        />
       </div>
 
       <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -106,7 +130,11 @@ const Overview: Component = () => {
                   maintainAspectRatio: false,
                   plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: (ctx: any) => `PV: ${ctx.raw.toLocaleString()}` } },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx: TooltipItem<"bar">) => `PV: ${(ctx.raw as number).toLocaleString()}`,
+                      },
+                    },
                   },
                   scales: {
                     x: { grid: { color: "rgba(120,120,120,0.15)" } },
@@ -133,10 +161,13 @@ const Overview: Component = () => {
                   plugins: {
                     legend: { position: "right" as const, labels: { boxWidth: 10, font: { size: 10 } } },
                     tooltip: {
-                      callbacks: { label: (ctx: any) => `${ctx.label}: ${ctx.raw.toLocaleString()} PV` },
+                      callbacks: {
+                        label: (ctx: TooltipItem<"doughnut">) =>
+                          `${ctx.label}: ${(ctx.raw as number).toLocaleString()} PV`,
+                      },
                     },
                   },
-                } as any}
+                }}
                 height={280}
               />
             </Show>
@@ -151,15 +182,29 @@ const Overview: Component = () => {
         <CardContent>
           <Show
             when={!recentLogs.loading}
-            fallback={<div class="space-y-2"><Skeleton class="h-6 w-full" /><Skeleton class="h-6 w-full" /></div>}
+            fallback={
+              <div class="space-y-2">
+                <Skeleton class="h-6 w-full" />
+                <Skeleton class="h-6 w-full" />
+              </div>
+            }
           >
-            <Show when={(recentLogs()?.length ?? 0) > 0} fallback={<p class="py-4 text-center text-sm text-muted-foreground">{t("overview.no_activity")}</p>}>
+            <Show
+              when={(recentLogs()?.length ?? 0) > 0}
+              fallback={
+                <p class="py-4 text-center text-sm text-muted-foreground">{t("overview.no_activity")}</p>
+              }
+            >
               <ul class="divide-y divide-border">
                 <For each={recentLogs() ?? []}>
                   {(l) => (
                     <li class="flex items-center gap-3 py-2 text-sm">
-                      <span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{l.action}</span>
-                      <span class="flex-1 truncate font-mono text-xs text-muted-foreground" title={l.detail}>{l.detail}</span>
+                      <span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        {l.action}
+                      </span>
+                      <span class="flex-1 truncate font-mono text-xs text-muted-foreground" title={l.detail}>
+                        {l.detail}
+                      </span>
                       <span class="tabular-nums text-xs text-muted-foreground">{l.timestamp}</span>
                     </li>
                   )}

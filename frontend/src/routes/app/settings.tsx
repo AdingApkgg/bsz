@@ -59,10 +59,14 @@ const ConnectionsCard: Component = () => {
         <div>
           <CardTitle>{t("settings.connections")}</CardTitle>
           <CardDescription>
-            {locale() === "zh" ? "管理你要连接的 busuanzi 后端。" : "Manage which busuanzi backends you connect to."}
+            {locale() === "zh"
+              ? "管理你要连接的 busuanzi 后端。"
+              : "Manage which busuanzi backends you connect to."}
           </CardDescription>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>+ {t("settings.add")}</Button>
+        <Button size="sm" onClick={() => setAddOpen(true)}>
+          + {t("settings.add")}
+        </Button>
       </CardHeader>
       <CardContent class="space-y-2">
         <For each={connections()}>
@@ -72,7 +76,9 @@ const ConnectionsCard: Component = () => {
                 <div class="flex items-center gap-2">
                   <span class="text-sm font-medium">{c.name}</span>
                   <Show when={c.id === activeConnection()?.id}>
-                    <Badge variant="default" class="h-4 px-1 text-[10px]">{t("conn.active")}</Badge>
+                    <Badge variant="default" class="h-4 px-1 text-[10px]">
+                      {t("conn.active")}
+                    </Badge>
                   </Show>
                   <Show when={c.token}>
                     <span class="text-[10px] text-muted-foreground">🔑</span>
@@ -81,9 +87,13 @@ const ConnectionsCard: Component = () => {
                 <div class="truncate font-mono text-xs text-muted-foreground">{c.baseUrl}</div>
               </div>
               <Show when={c.id !== activeConnection()?.id}>
-                <Button size="sm" variant="ghost" onClick={() => setActive(c.id)}>{t("conn.activate")}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setActive(c.id)}>
+                  {t("conn.activate")}
+                </Button>
               </Show>
-              <Button size="sm" variant="outline" onClick={() => setEditing(c)}>{t("common.confirm")}…</Button>
+              <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
+                {t("common.confirm")}…
+              </Button>
             </div>
           )}
         </For>
@@ -103,10 +113,15 @@ const ConnectionsCard: Component = () => {
 };
 
 const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void }> = (props) => {
-  const editing = !!props.connection;
-  const [name, setName] = createSignal(props.connection?.name ?? "");
-  const [baseUrl, setBaseUrl] = createSignal(props.connection?.baseUrl ?? "");
-  const [token, setToken] = createSignal(props.connection?.token ?? "");
+  // The dialog mounts fresh whenever the edited connection changes (parent
+  // gates it with <Show when={editing()}>), so a one-shot snapshot of props is
+  // exactly what we want for the form's initial values.
+  // eslint-disable-next-line solid/reactivity
+  const initial = props.connection;
+  const editing = !!initial;
+  const [name, setName] = createSignal(initial?.name ?? "");
+  const [baseUrl, setBaseUrl] = createSignal(initial?.baseUrl ?? "");
+  const [token, setToken] = createSignal(initial?.token ?? "");
   const [busy, setBusy] = createSignal(false);
   const [test, setTest] = createSignal<{ ok: boolean; message: string } | null>(null);
 
@@ -130,9 +145,17 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
   function save() {
     const url = baseUrl().trim();
     if (!url) return toast.error("URL required");
-    const label = name().trim() || (() => { try { return new URL(url).host; } catch { return url; } })();
-    if (editing) {
-      updateConnection(props.connection!.id, { name: label, baseUrl: url, token: token().trim() });
+    const label =
+      name().trim() ||
+      (() => {
+        try {
+          return new URL(url).host;
+        } catch {
+          return url;
+        }
+      })();
+    if (initial) {
+      updateConnection(initial.id, { name: label, baseUrl: url, token: token().trim() });
       toast.success(t("common.success"));
     } else {
       addConnection({ name: label, baseUrl: url, token: token().trim() });
@@ -142,8 +165,8 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
   }
 
   function remove() {
-    if (!editing) return;
-    deleteConnection(props.connection!.id);
+    if (!initial) return;
+    deleteConnection(initial.id);
     toast.success(t("common.success"));
     props.onClose();
   }
@@ -152,7 +175,7 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
     <Dialog open onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? props.connection!.name : `+ ${t("top.add_connection")}`}</DialogTitle>
+          <DialogTitle>{editing ? initial!.name : `+ ${t("top.add_connection")}`}</DialogTitle>
           <DialogDescription>{t("welcome.no_conn_body")}</DialogDescription>
         </DialogHeader>
         <div class="space-y-3">
@@ -165,7 +188,9 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
             <TextFieldInput placeholder="https://bsz.example.com" />
           </TextField>
           <TextField value={token()} onChange={setToken}>
-            <TextFieldLabel>{t("conn.token")} <span class="text-muted-foreground">{t("conn.token_optional")}</span></TextFieldLabel>
+            <TextFieldLabel>
+              {t("conn.token")} <span class="text-muted-foreground">{t("conn.token_optional")}</span>
+            </TextFieldLabel>
             <TextFieldInput type="password" placeholder="ADMIN_TOKEN" />
           </TextField>
           <Show when={test()}>
@@ -178,17 +203,24 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
                     : "border-destructive/30 bg-destructive/10 text-destructive")
                 }
               >
-                {r().ok ? "✓ " : "✗ "}{r().message}
+                {r().ok ? "✓ " : "✗ "}
+                {r().message}
               </div>
             )}
           </Show>
         </div>
         <DialogFooter>
           <Show when={editing}>
-            <Button variant="destructive" onClick={remove} class="mr-auto">{t("conn.delete")}</Button>
+            <Button variant="destructive" onClick={remove} class="mr-auto">
+              {t("conn.delete")}
+            </Button>
           </Show>
-          <Button variant="outline" disabled={busy()} onClick={runTest}>{t("conn.test")}</Button>
-          <Button variant="ghost" onClick={props.onClose}>{t("common.cancel")}</Button>
+          <Button variant="outline" disabled={busy()} onClick={runTest}>
+            {t("conn.test")}
+          </Button>
+          <Button variant="ghost" onClick={props.onClose}>
+            {t("common.cancel")}
+          </Button>
           <Button onClick={save}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
@@ -209,12 +241,8 @@ const AppearanceCard: Component = () => (
         <div class="flex gap-2">
           <For each={["system", "light", "dark"] as Theme[]}>
             {(v) => (
-              <Button
-                size="sm"
-                variant={theme() === v ? "default" : "outline"}
-                onClick={() => setTheme(v)}
-              >
-                {t(("theme." + v) as any)}
+              <Button size="sm" variant={theme() === v ? "default" : "outline"} onClick={() => setTheme(v)}>
+                {t(`theme.${v}` as const)}
               </Button>
             )}
           </For>
@@ -226,11 +254,7 @@ const AppearanceCard: Component = () => (
         <div class="flex gap-2">
           <For each={["zh", "en"] as Locale[]}>
             {(v) => (
-              <Button
-                size="sm"
-                variant={locale() === v ? "default" : "outline"}
-                onClick={() => setLocale(v)}
-              >
+              <Button size="sm" variant={locale() === v ? "default" : "outline"} onClick={() => setLocale(v)}>
                 {v === "zh" ? "中文" : "English"}
               </Button>
             )}
@@ -254,7 +278,11 @@ const DataCard: Component = () => {
       <CardContent class="space-y-6">
         <Show
           when={hasToken()}
-          fallback={<p class="text-sm text-muted-foreground">Configure ADMIN_TOKEN on the active connection to enable data tools.</p>}
+          fallback={
+            <p class="text-sm text-muted-foreground">
+              Configure ADMIN_TOKEN on the active connection to enable data tools.
+            </p>
+          }
         >
           <ExportSection />
           <Separator />
@@ -332,7 +360,11 @@ const SyncSection: Component = () => {
   const [url, setUrl] = createSignal("");
   const [file, setFile] = createSignal<File | null>(null);
   const [concurrency, setConcurrency] = createSignal(3);
-  const [state, setState] = createSignal<SyncState>({ progress: { total: 0, current: 0, imported: 0, errors: 0 }, logs: [], running: false });
+  const [state, setState] = createSignal<SyncState>({
+    progress: { total: 0, current: 0, imported: 0, errors: 0 },
+    logs: [],
+    running: false,
+  });
 
   function addLog(text: string, opts: { ok?: boolean; error?: boolean } = {}) {
     setState((s) => ({ ...s, logs: [{ text, ...opts }, ...s.logs].slice(0, 30) }));
@@ -356,7 +388,11 @@ const SyncSection: Component = () => {
           body: fd,
         });
         const r = await res.json();
-        if (!r.success) { addLog(r.message ?? "upload failed", { error: true }); setState((s) => ({ ...s, running: false })); return; }
+        if (!r.success) {
+          addLog(r.message ?? "upload failed", { error: true });
+          setState((s) => ({ ...s, running: false }));
+          return;
+        }
         addLog(`Found ${r.url_count} URLs`);
         sseUrl = syncEventSourceUrl({ sync_id: r.sync_id, concurrency: String(concurrency()) });
       } catch (e: unknown) {
@@ -375,15 +411,25 @@ const SyncSection: Component = () => {
       if (d.total) {
         setState((s) => ({
           ...s,
-          progress: { total: d.total, current: d.current ?? 0, imported: d.imported ?? 0, errors: d.errors ?? 0 },
+          progress: {
+            total: d.total,
+            current: d.current ?? 0,
+            imported: d.imported ?? 0,
+            errors: d.errors ?? 0,
+          },
         }));
       }
-      if (d.path) addLog(d.error ? `✗ ${d.path}` : `✓ ${d.path} PV:${d.page_pv}`, { error: !!d.error, ok: !d.error });
+      if (d.path)
+        addLog(d.error ? `✗ ${d.path}` : `✓ ${d.path} PV:${d.page_pv}`, { error: !!d.error, ok: !d.error });
       else if (d.message) addLog(d.message);
     });
-    sse.addEventListener("error", (e: any) => {
+    sse.addEventListener("error", (e: Event) => {
       let msg = "sync error";
-      try { msg = JSON.parse(e.data).message; } catch {}
+      try {
+        msg = JSON.parse((e as MessageEvent<string>).data).message;
+      } catch {
+        // event has no payload — fall back to generic message
+      }
       addLog(msg, { error: true });
       setState((s) => ({ ...s, running: false }));
       sse.close();
@@ -403,12 +449,17 @@ const SyncSection: Component = () => {
     };
   }
 
-  const percent = () => state().progress.total ? Math.min(100, Math.round((state().progress.current / state().progress.total) * 100)) : 0;
+  const percent = () =>
+    state().progress.total
+      ? Math.min(100, Math.round((state().progress.current / state().progress.total) * 100))
+      : 0;
 
   return (
     <div class="space-y-2">
       <div class="text-sm font-medium">{t("settings.sitemap_sync")}</div>
-      <p class="text-xs text-muted-foreground">Pull historical stats from busuanzi.ibruce.info using a sitemap (incremental merge).</p>
+      <p class="text-xs text-muted-foreground">
+        Pull historical stats from busuanzi.ibruce.info using a sitemap (incremental merge).
+      </p>
       <div class="flex gap-2">
         <input
           type="url"
@@ -443,14 +494,24 @@ const SyncSection: Component = () => {
             <div class="h-full bg-primary transition-all" style={{ width: `${percent()}%` }} />
           </div>
           <div class="flex gap-4 text-xs text-muted-foreground">
-            <span>{state().progress.current}/{state().progress.total}</span>
-            <span>ok <b class="text-green-500">{state().progress.imported}</b></span>
-            <span>err <b class="text-destructive">{state().progress.errors}</b></span>
+            <span>
+              {state().progress.current}/{state().progress.total}
+            </span>
+            <span>
+              ok <b class="text-green-500">{state().progress.imported}</b>
+            </span>
+            <span>
+              err <b class="text-destructive">{state().progress.errors}</b>
+            </span>
           </div>
           <div class="max-h-[140px] overflow-y-auto rounded bg-background p-2 font-mono text-[11px]">
             <For each={state().logs}>
               {(line) => (
-                <div class={line.error ? "text-destructive" : line.ok ? "text-green-500" : "text-muted-foreground"}>
+                <div
+                  class={
+                    line.error ? "text-destructive" : line.ok ? "text-green-500" : "text-muted-foreground"
+                  }
+                >
                   {line.text}
                 </div>
               )}
