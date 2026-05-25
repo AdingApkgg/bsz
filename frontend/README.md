@@ -11,8 +11,8 @@
 
 ```bash
 bun install
-VITE_API_BASE_URL=http://localhost:8080 bun run dev
-# → http://localhost:3000
+VITE_API_BASE_URL=http://localhost:12700 bun run dev
+# → http://localhost:12705
 ```
 
 ## 构建

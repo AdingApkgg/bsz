@@ -26,12 +26,12 @@
 cd backend && cargo run
 
 # 2. 启动前端（开发模式）
-cd ../frontend && VITE_API_BASE_URL=http://localhost:8080 bun run dev
+cd ../frontend && VITE_API_BASE_URL=http://localhost:12700 bun run dev
 ```
 
 访问：
-- 前端：http://localhost:3000
-- 后端 API：http://localhost:8080/api
+- 前端：http://localhost:12705
+- 后端 API：http://localhost:12700/api
 
 ## Admin 控制流
 

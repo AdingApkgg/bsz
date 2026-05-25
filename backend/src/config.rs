@@ -15,7 +15,7 @@ pub struct Config {
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     dotenv::dotenv().ok();
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "12700".to_string());
 
     Config {
         web_addr: format!("0.0.0.0:{}", port),

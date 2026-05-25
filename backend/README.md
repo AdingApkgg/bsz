@@ -12,7 +12,7 @@ Rust 后端，提供：
 cargo run
 
 # 仅启用统计 API（默认）
-PORT=8080 ./target/release/busuanzi-rs
+PORT=12700 ./target/release/busuanzi-rs
 
 # 启用 admin API
 ADMIN_TOKEN=$(openssl rand -hex 16) cargo run
@@ -22,7 +22,7 @@ ADMIN_TOKEN=$(openssl rand -hex 16) cargo run
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `PORT` | 监听端口 | `8080` |
+| `PORT` | 监听端口 | `12700` |
 | `ADMIN_TOKEN` | 非空时挂载 `/api/admin/*` 并作为 Bearer 校验 | _（空 → admin 不挂载）_ |
 | `SAVE_INTERVAL` | 持久化间隔（秒） | `30` |
 | `MAX_BODY_SIZE` | 上传体积上限 | `100MB` |
@@ -46,18 +46,18 @@ cp example/.env .env
 
 ```bash
 # 计一次并返回数据
-curl -X POST http://localhost:8080/api \
+curl -X POST http://localhost:12700/api \
   -H "x-bsz-referer: https://example.com/page" \
   -c cookies.txt -b cookies.txt
 
 # 仅查询，不计数
-curl http://localhost:8080/api -H "x-bsz-referer: https://example.com/page"
+curl http://localhost:12700/api -H "x-bsz-referer: https://example.com/page"
 
 # 仅上报，不返回
-curl -X PUT http://localhost:8080/api -H "x-bsz-referer: https://example.com/page"
+curl -X PUT http://localhost:12700/api -H "x-bsz-referer: https://example.com/page"
 
 # 健康检查
-curl http://localhost:8080/ping
+curl http://localhost:12700/ping
 ```
 
 响应格式：

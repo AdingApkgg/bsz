@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
+    "dev": "vinxi dev --port 12705",
     "build": "vinxi build && bun scripts/postbuild.ts",
-    "preview": "vinxi start",
+    "preview": "vinxi start --port 12705",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
