@@ -2,10 +2,20 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "frontend",
+      "name": "landing",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "${workspaceFolder}/frontend",
+      "cwd": "${workspaceFolder}/frontend/packages/landing",
+      "port": 12706,
+      "env": {
+        "VITE_ADMIN_URL": "http://localhost:12705"
+      }
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/frontend/packages/admin",
       "port": 12705,
       "env": {
         "VITE_API_BASE_URL": "http://localhost:12700"

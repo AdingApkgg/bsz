@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "scripts/**", "app.config.ts"]
+    "includes": ["packages/*/src/**", "packages/*/scripts/**", "packages/*/vite.config.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -81,7 +81,7 @@
   },
   "overrides": [
     {
-      "includes": ["scripts/**"],
+      "includes": ["packages/*/scripts/**"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -91,7 +91,7 @@
       }
     },
     {
-      "includes": ["src/components/ui/**"],
+      "includes": ["packages/shared/src/components/ui/**"],
       "linter": {
         "rules": {
           "suspicious": {
