@@ -1,4 +1,6 @@
-import { For, Show, onMount, type Component } from "solid-js";
+import { For, Show, onMount, type Component, type JSX } from "solid-js";
+import { ExternalLink, Moon, Sun } from "lucide-solid";
+import { Motion } from "solid-motionone";
 import { Button } from "@bsz/shared/components/ui/button";
 import { Card, CardContent } from "@bsz/shared/components/ui/card";
 import {
@@ -20,20 +22,38 @@ const App: Component = () => {
       <Header />
       <div class="mx-auto max-w-3xl px-6 pt-16 pb-12 sm:pt-24">
         <Hero />
-        <Features />
-        <ApiSection />
-        <Example />
+        <Section delay={0.1}>
+          <Features />
+        </Section>
+        <Section delay={0.18}>
+          <ApiSection />
+        </Section>
+        <Section delay={0.26}>
+          <Example />
+        </Section>
       </div>
       <Footer />
     </main>
   );
 };
 
+const Section: Component<{ children: JSX.Element; delay: number }> = (props) => (
+  <Motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, delay: props.delay }}
+  >
+    {props.children}
+  </Motion.div>
+);
+
 const Header: Component = () => (
   <header class="flex items-center justify-end gap-2 px-6 py-4">
     <Show when={ADMIN_URL}>
       <a href={ADMIN_URL} rel="noopener">
-        <Button size="sm">{t("open_dashboard")}</Button>
+        <Button size="sm" class="gap-1.5">
+          {t("open_dashboard")} <ExternalLink class="size-3.5" />
+        </Button>
       </a>
     </Show>
     <ThemeButton />
@@ -42,27 +62,42 @@ const Header: Component = () => (
 );
 
 const Hero: Component = () => (
-  <div class="mb-12 text-center">
-    <div class="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+  <Motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.45 }}
+    class="mb-12 text-center"
+  >
+    <Motion.div
+      initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
+      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+      transition={{ duration: 0.55, easing: [0.34, 1.56, 0.64, 1] }}
+      class="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary"
+    >
       <svg viewBox="0 0 24 24" fill="currentColor" class="size-6">
         <path d="M3 12l9-9 9 9-9 9-9-9zm9-6.5L5.5 12 12 18.5 18.5 12 12 5.5z" />
       </svg>
-    </div>
-    <h1 class="text-4xl font-semibold tracking-tight">Busuanzi</h1>
-    <p class="mt-2 text-sm text-muted-foreground">{t("subtitle")}</p>
-  </div>
+    </Motion.div>
+    <h1 class="font-semibold text-4xl tracking-tight">Busuanzi</h1>
+    <p class="mt-2 text-muted-foreground text-sm">{t("subtitle")}</p>
+  </Motion.div>
 );
 
 const Features: Component = () => (
   <Card class="mb-6">
     <CardContent class="p-6">
-      <h2 class="mb-3 text-lg font-semibold">{t("features_title")}</h2>
+      <h2 class="mb-3 font-semibold text-lg">{t("features_title")}</h2>
       <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <For each={t("features")}>
-          {(f) => (
-            <div class="rounded-md border border-primary/15 bg-primary/5 px-3 py-2 text-center text-xs">
+          {(f, i) => (
+            <Motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 * i() }}
+              class="rounded-md border border-primary/15 bg-primary/5 px-3 py-2 text-center text-xs"
+            >
               {f}
-            </div>
+            </Motion.div>
           )}
         </For>
       </div>
@@ -79,23 +114,23 @@ const METHOD_COLOR: Record<Method, string> = {
 
 const ApiRow: Component<{ method: Method; path: string; desc: string }> = (props) => (
   <div class="flex items-center gap-3 border-b border-border py-2 text-sm last:border-0">
-    <span class={`inline-block rounded px-2 py-0.5 text-xs font-medium ${METHOD_COLOR[props.method]}`}>
+    <span class={`inline-block rounded px-2 py-0.5 font-medium text-xs ${METHOD_COLOR[props.method]}`}>
       {props.method}
     </span>
     <code class="min-w-[60px] font-mono text-xs">{props.path}</code>
-    <span class="text-xs text-muted-foreground">{props.desc}</span>
+    <span class="text-muted-foreground text-xs">{props.desc}</span>
   </div>
 );
 
 const ApiSection: Component = () => (
   <Card class="mb-6">
     <CardContent class="p-6">
-      <h2 class="mb-3 text-lg font-semibold">{t("api_title")}</h2>
+      <h2 class="mb-3 font-semibold text-lg">{t("api_title")}</h2>
       <ApiRow method="POST" path="/api" desc={t("api_post")} />
       <ApiRow method="GET" path="/api" desc={t("api_get")} />
       <ApiRow method="PUT" path="/api" desc={t("api_put")} />
       <ApiRow method="GET" path="/ping" desc={t("api_ping")} />
-      <div class="mt-4 border-l-2 border-l-primary bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+      <div class="mt-4 border-l-2 border-l-primary bg-primary/5 px-3 py-2 text-muted-foreground text-xs">
         <strong class="text-foreground">{t("api_header_hint")}：</strong>
         {t("api_header_text")}
         <br />
@@ -111,8 +146,8 @@ const Example: Component = () => {
   return (
     <Card class="mb-6">
       <CardContent class="p-6">
-        <h2 class="mb-3 text-lg font-semibold">{t("example_title")}</h2>
-        <p class="mb-3 text-sm text-muted-foreground">{t("example_hint")}</p>
+        <h2 class="mb-3 font-semibold text-lg">{t("example_title")}</h2>
+        <p class="mb-3 text-muted-foreground text-sm">{t("example_hint")}</p>
         <pre class="overflow-x-auto rounded-md border border-border bg-background p-3 text-xs leading-relaxed">
           {`<p>PV <span id="pv">-</span> · UV <span id="uv">-</span></p>
 <script>
@@ -135,7 +170,7 @@ fetch('${apiUrl}', {
 };
 
 const Footer: Component = () => (
-  <footer class="border-t border-border py-8 text-center text-xs text-muted-foreground">
+  <footer class="border-t border-border py-8 text-center text-muted-foreground text-xs">
     <div class="space-x-2">
       <a href={GITHUB_URL} rel="noopener" class="hover:text-foreground">
         {t("github")}
@@ -186,8 +221,8 @@ const ThemeButton: Component = () => (
       // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
       as={(p: any) => (
         <Button {...p} size="sm" variant="ghost" class="h-8 w-8 p-0" title="Theme">
-          <Show when={theme() === "dark"} fallback={<SunIcon />}>
-            <MoonIcon />
+          <Show when={theme() === "dark"} fallback={<Sun class="size-4" />}>
+            <Moon class="size-4" />
           </Show>
         </Button>
       )}
@@ -203,25 +238,5 @@ const ThemeButton: Component = () => (
     </DropdownMenuContent>
   </DropdownMenu>
 );
-
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-      <circle cx="12" cy="12" r="4" />
-      <path
-        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
-        stroke-linecap="round"
-      />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
 
 export default App;

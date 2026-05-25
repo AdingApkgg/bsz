@@ -1,4 +1,7 @@
 import { For, Show, createSignal, type Component } from "solid-js";
+import { A } from "@solidjs/router";
+import { ChevronDown, Moon, Search, Sun } from "lucide-solid";
+import { Motion } from "solid-motionone";
 import { activeConnection, connections, setActive } from "~/lib/connections";
 import {
   type DictKey,
@@ -19,24 +22,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@bsz/shared/components/ui/dropdown-menu";
-import { A } from "@solidjs/router";
 
 type Props = { onOpenCommand: () => void };
 
 const TopBar: Component<Props> = (props) => {
   const active = () => activeConnection();
   return (
-    <header class="flex h-12 items-center gap-3 border-b border-border bg-background px-4">
+    <Motion.header
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      class="flex h-12 items-center gap-3 border-b border-border bg-background px-4"
+    >
       <ConnectionMenu />
       <button
         type="button"
-        class="flex h-8 flex-1 max-w-md items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs text-muted-foreground transition-colors hover:bg-card"
+        class="flex h-8 max-w-md flex-1 items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs text-muted-foreground transition-colors hover:bg-card"
         onClick={() => props.onOpenCommand()}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-3.5">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m16.65 16.65 4 4" stroke-linecap="round" />
-        </svg>
+        <Search class="size-3.5" />
         <span class="flex-1 text-left">{t("top.search")}</span>
         <kbd class="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
@@ -51,7 +55,7 @@ const TopBar: Component<Props> = (props) => {
           </Button>
         </A>
       </Show>
-    </header>
+    </Motion.header>
   );
 };
 
@@ -69,15 +73,7 @@ const ConnectionMenu: Component = () => {
           >
             <span class="inline-block size-2 rounded-full bg-primary" />
             <span class="max-w-[160px] truncate">{active()?.name ?? t("top.no_connection")}</span>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="size-3 opacity-60"
-            >
-              <path d="m6 9 6 6 6-6" stroke-linecap="round" />
-            </svg>
+            <ChevronDown class="size-3 opacity-60" />
           </button>
         )}
       />
@@ -110,32 +106,30 @@ const ConnectionMenu: Component = () => {
   );
 };
 
-const LanguageMenu: Component = () => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
-        as={(p: any) => (
-          <Button {...p} size="sm" variant="ghost" class="h-8 px-2.5 text-xs" title={t("top.language")}>
-            {localeShortLabel()}
-          </Button>
+const LanguageMenu: Component = () => (
+  <DropdownMenu>
+    <DropdownMenuTrigger
+      // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
+      as={(p: any) => (
+        <Button {...p} size="sm" variant="ghost" class="h-8 px-2.5 text-xs" title={t("top.language")}>
+          {localeShortLabel()}
+        </Button>
+      )}
+    />
+    <DropdownMenuContent class="w-36">
+      <For each={LOCALE_LIST}>
+        {(v) => (
+          <DropdownMenuItem onSelect={() => setLocale(v)} class="flex items-center justify-between">
+            <span>{localeFullLabel(v)}</span>
+            <Show when={locale() === v}>
+              <span class="text-primary">●</span>
+            </Show>
+          </DropdownMenuItem>
         )}
-      />
-      <DropdownMenuContent class="w-36">
-        <For each={LOCALE_LIST}>
-          {(v) => (
-            <DropdownMenuItem onSelect={() => setLocale(v)} class="flex items-center justify-between">
-              <span>{localeFullLabel(v)}</span>
-              <Show when={locale() === v}>
-                <span class="text-primary">●</span>
-              </Show>
-            </DropdownMenuItem>
-          )}
-        </For>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
+      </For>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
 
 const ThemeMenu: Component = () => {
   const labels: Record<Theme, DictKey> = {
@@ -149,8 +143,8 @@ const ThemeMenu: Component = () => {
         // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
         as={(p: any) => (
           <Button {...p} size="sm" variant="ghost" class="h-8 w-8 p-0" title={t("top.theme")}>
-            <Show when={theme() === "dark"} fallback={<SunIcon />}>
-              <MoonIcon />
+            <Show when={theme() === "dark"} fallback={<Sun class="size-4" />}>
+              <Moon class="size-4" />
             </Show>
           </Button>
         )}
@@ -170,25 +164,5 @@ const ThemeMenu: Component = () => {
     </DropdownMenu>
   );
 };
-
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-      <circle cx="12" cy="12" r="4" />
-      <path
-        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
-        stroke-linecap="round"
-      />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
 
 export default TopBar;

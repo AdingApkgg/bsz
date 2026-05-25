@@ -1,5 +1,6 @@
 import { Show, type ParentComponent } from "solid-js";
 import { Navigate } from "@solidjs/router";
+import { Motion } from "solid-motionone";
 import Sidebar from "~/components/app-shell/Sidebar";
 import TopBar from "~/components/app-shell/TopBar";
 import CommandPalette, { useCommandHotkey } from "~/components/app-shell/CommandPalette";
@@ -15,7 +16,14 @@ const AppLayout: ParentComponent = (props) => {
         <Sidebar />
         <div class="flex flex-1 flex-col overflow-hidden">
           <TopBar onOpenCommand={() => setCmdOpen(true)} />
-          <main class="flex-1 overflow-y-auto">{props.children}</main>
+          <Motion.main
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            class="flex-1 overflow-y-auto"
+          >
+            {props.children}
+          </Motion.main>
         </div>
         <CommandPalette open={cmdOpen()} onOpenChange={setCmdOpen} />
         <UndoToast />

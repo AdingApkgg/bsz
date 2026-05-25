@@ -1,52 +1,18 @@
 import { A, useLocation } from "@solidjs/router";
-import { type Component, type JSX, For } from "solid-js";
+import { type Component, For } from "solid-js";
+import { Activity, Globe, LayoutGrid, Settings as SettingsIcon, type LucideProps } from "lucide-solid";
+import { Motion } from "solid-motionone";
 import { cn } from "@bsz/shared/lib/utils";
 import { t } from "~/lib/i18n";
 
-type Item = { href: string; labelKey: Parameters<typeof t>[0]; icon: JSX.Element };
+type IconComponent = Component<LucideProps>;
+type Item = { href: string; labelKey: Parameters<typeof t>[0]; icon: IconComponent };
 
 const items: Item[] = [
-  {
-    href: "/app/overview",
-    labelKey: "nav.overview",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-        <rect x="3" y="3" width="7" height="9" rx="1.5" />
-        <rect x="14" y="3" width="7" height="5" rx="1.5" />
-        <rect x="14" y="12" width="7" height="9" rx="1.5" />
-        <rect x="3" y="16" width="7" height="5" rx="1.5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/app/sites",
-    labelKey: "nav.sites",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
-      </svg>
-    ),
-  },
-  {
-    href: "/app/logs",
-    labelKey: "nav.logs",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-        <path d="M4 5h16M4 12h16M4 19h10" stroke-linecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/app/settings",
-    labelKey: "nav.settings",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
-      </svg>
-    ),
-  },
+  { href: "/app/overview", labelKey: "nav.overview", icon: LayoutGrid },
+  { href: "/app/sites", labelKey: "nav.sites", icon: Globe },
+  { href: "/app/logs", labelKey: "nav.logs", icon: Activity },
+  { href: "/app/settings", labelKey: "nav.settings", icon: SettingsIcon },
 ];
 
 const Sidebar: Component = () => {
@@ -64,17 +30,23 @@ const Sidebar: Component = () => {
       </div>
       <nav class="flex flex-1 flex-col gap-0.5">
         <For each={items}>
-          {(item) => (
-            <A
-              href={item.href}
-              class={cn(
-                "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-                isActive(item.href) && "bg-accent text-accent-foreground font-medium",
-              )}
+          {(item, i) => (
+            <Motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.04 * i(), duration: 0.2 }}
             >
-              <span class="opacity-80">{item.icon}</span>
-              <span>{t(item.labelKey)}</span>
-            </A>
+              <A
+                href={item.href}
+                class={cn(
+                  "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+                  isActive(item.href) && "bg-accent font-medium text-accent-foreground",
+                )}
+              >
+                <item.icon class="size-4 opacity-80" />
+                <span>{t(item.labelKey)}</span>
+              </A>
+            </Motion.div>
           )}
         </For>
       </nav>

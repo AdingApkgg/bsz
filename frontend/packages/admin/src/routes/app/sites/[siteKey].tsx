@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, For, Show, type Component } from "solid-js";
 import { Title } from "@solidjs/meta";
 import { A, useParams, useNavigate } from "@solidjs/router";
+import { ChevronLeft } from "lucide-solid";
 import { toast } from "solid-sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@bsz/shared/components/ui/card";
 import { Button } from "@bsz/shared/components/ui/button";
@@ -165,7 +166,8 @@ const SiteDetail: Component = () => {
     <div class="px-6 py-6 lt-md:px-4">
       <Title>{siteKey()} · Busuanzi</Title>
       <div class="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-        <A href="/app/sites" class="hover:text-foreground">
+        <A href="/app/sites" class="inline-flex items-center gap-1 hover:text-foreground">
+          <ChevronLeft class="size-4" />
           {t("site.back")}
         </A>
         <span>/</span>

@@ -1,5 +1,6 @@
 import { For, Show, createSignal, type Component } from "solid-js";
 import { Title } from "@solidjs/meta";
+import { CheckCircle2, Key, XCircle } from "lucide-solid";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@bsz/shared/components/ui/card";
 import { Button } from "@bsz/shared/components/ui/button";
 import { TextField, TextFieldInput, TextFieldLabel } from "@bsz/shared/components/ui/text-field";
@@ -77,7 +78,7 @@ const ConnectionsCard: Component = () => {
                     </Badge>
                   </Show>
                   <Show when={c.token}>
-                    <span class="text-[10px] text-muted-foreground">🔑</span>
+                    <Key class="size-3 text-muted-foreground" />
                   </Show>
                 </div>
                 <div class="truncate font-mono text-xs text-muted-foreground">{c.baseUrl}</div>
@@ -192,14 +193,14 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
             {(r) => (
               <div
                 class={
-                  "rounded-md border px-3 py-2 text-xs " +
+                  "flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs " +
                   (r().ok
                     ? "border-primary/30 bg-primary/10 text-primary"
                     : "border-destructive/30 bg-destructive/10 text-destructive")
                 }
               >
-                {r().ok ? "✓ " : "✗ "}
-                {r().message}
+                {r().ok ? <CheckCircle2 class="size-3.5" /> : <XCircle class="size-3.5" />}
+                <span>{r().message}</span>
               </div>
             )}
           </Show>

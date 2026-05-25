@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, For, Show, type Component } from "solid-js";
 import { Title } from "@solidjs/meta";
 import { A, useNavigate } from "@solidjs/router";
+import { ArrowRight } from "lucide-solid";
 import { Button } from "@bsz/shared/components/ui/button";
 import { TextField, TextFieldInput } from "@bsz/shared/components/ui/text-field";
 import {
@@ -228,8 +229,10 @@ const SitesPage: Component = () => {
                         <A
                           href={`/app/sites/${encodeURIComponent(s.site_key)}`}
                           onClick={(e) => e.stopPropagation()}
+                          class="inline-flex"
+                          aria-label="open"
                         >
-                          →
+                          <ArrowRight class="size-4" />
                         </A>
                       </TableCell>
                     </TableRow>
