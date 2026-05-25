@@ -92,3 +92,36 @@
     border-radius: 3px;
   }
 }
+
+/* Shiki dual-theme tokens. `defaultColor: false` outputs only CSS vars,
+   so we drive light↔dark via the `html.dark` class instead of the
+   browser's prefers-color-scheme. Background lives on the container so
+   per-token spans don't paint their own bg rectangles. */
+.shiki {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+.shiki span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+html.dark .shiki {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+html.dark .shiki span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+.code-block .shiki {
+  background-color: transparent !important;
+  padding: 0;
+}
+.shiki-fallback {
+  color: hsl(var(--foreground));
+  white-space: pre;
+}

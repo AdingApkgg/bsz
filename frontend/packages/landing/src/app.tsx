@@ -1,4 +1,4 @@
-import { For, Show, onMount, type Component, type JSX } from "solid-js";
+import { For, Show, Suspense, lazy, onMount, type Component, type JSX } from "solid-js";
 import { Moon, Sun } from "lucide-solid";
 import { Motion } from "solid-motionone";
 import { Button } from "@bsz/shared/components/ui/button";
@@ -10,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@bsz/shared/components/ui/dropdown-menu";
 import { initTheme, setTheme, theme, type Theme } from "@bsz/shared/lib/theme";
+// Shiki + a syntax theme weigh ~360 kB — defer loading until the example
+// section actually renders.
+const CodeBlock = lazy(() => import("./components/CodeBlock"));
 import { LOCALE_LIST, locale, localeFullLabel, localeShortLabel, setLocale, t } from "./i18n";
 
 const GITHUB_URL = "https://github.com/AdingApkgg/bsz";
@@ -146,33 +149,37 @@ const ApiSection: Component = () => (
   </Card>
 );
 
-const Example: Component = () => {
-  const apiUrl = "https://your-backend.example.com/api";
-  return (
-    <Card class="mb-6">
-      <CardContent class="p-6">
-        <h2 class="mb-3 font-semibold text-lg">{t("example_title")}</h2>
-        <p class="mb-3 text-muted-foreground text-sm">{t("example_hint")}</p>
-        <pre class="overflow-x-auto rounded-md border border-border bg-background p-3 text-xs leading-relaxed">
-          {`<p>PV <span id="pv">-</span> · UV <span id="uv">-</span></p>
-<script>
-fetch('${apiUrl}', {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'x-bsz-referer': location.href },
+const EXAMPLE_CODE = `// PV/UV counter — drop into any HTML page
+fetch("https://your-backend.example.com/api", {
+  method: "POST",
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
 })
-  .then(r => r.json())
+  .then((r) => r.json())
   .then(({ success, data }) => {
     if (!success) return;
     pv.textContent = data.site_pv;
     uv.textContent = data.site_uv;
   });
-</script>`}
-        </pre>
-      </CardContent>
-    </Card>
-  );
-};
+`;
+
+const Example: Component = () => (
+  <Card class="mb-6">
+    <CardContent class="p-6">
+      <h2 class="mb-3 font-semibold text-lg">{t("example_title")}</h2>
+      <p class="mb-3 text-muted-foreground text-sm">{t("example_hint")}</p>
+      <Suspense
+        fallback={
+          <div class="overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-muted-foreground text-xs leading-relaxed">
+            <pre>{EXAMPLE_CODE}</pre>
+          </div>
+        }
+      >
+        <CodeBlock code={EXAMPLE_CODE} />
+      </Suspense>
+    </CardContent>
+  </Card>
+);
 
 const Footer: Component = () => (
   <footer class="border-t border-border py-8 text-center text-muted-foreground text-xs">
