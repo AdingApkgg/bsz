@@ -1,170 +1,363 @@
-import { createSignal } from "solid-js";
+// Type-safe i18n built on @solid-primitives/i18n.
+//
+// Shape: `dict[locale][dot.notation.key] = string`. Strings can contain
+// `{{var}}` placeholders interpolated by `resolveTemplate`. Missing keys fall
+// back to the `zh` source dict, then to the key itself — so a typo is loud
+// but doesn't blow up the UI.
 
-export type Locale = "zh" | "en" | "ja";
+import * as i18n from "@solid-primitives/i18n";
+import { createSignal } from "solid-js";
 
 const KEY = "bsz.locale";
 
 const dict = {
-  // navigation
-  "nav.overview": { zh: "总览", en: "Overview", ja: "概要" },
-  "nav.sites": { zh: "站点", en: "Sites", ja: "サイト" },
-  "nav.logs": { zh: "日志", en: "Logs", ja: "ログ" },
-  "nav.settings": { zh: "设置", en: "Settings", ja: "設定" },
+  zh: {
+    // navigation
+    "nav.overview": "总览",
+    "nav.sites": "站点",
+    "nav.logs": "日志",
+    "nav.settings": "设置",
 
-  // top bar
-  "top.search": { zh: "搜索 / 命令", en: "Search / commands", ja: "検索・コマンド" },
-  "top.theme": { zh: "主题", en: "Theme", ja: "テーマ" },
-  "top.language": { zh: "语言", en: "Language", ja: "言語" },
-  "top.no_connection": { zh: "未选择连接", en: "No connection", ja: "接続なし" },
-  "top.add_connection": { zh: "添加连接", en: "Add connection", ja: "接続を追加" },
+    // top bar
+    "top.search": "搜索 / 命令",
+    "top.theme": "主题",
+    "top.language": "语言",
+    "top.no_connection": "未选择连接",
+    "top.add_connection": "添加连接",
 
-  // theme
-  "theme.system": { zh: "跟随系统", en: "System", ja: "システム" },
-  "theme.light": { zh: "亮色", en: "Light", ja: "ライト" },
-  "theme.dark": { zh: "暗色", en: "Dark", ja: "ダーク" },
+    // theme
+    "theme.system": "跟随系统",
+    "theme.light": "亮色",
+    "theme.dark": "暗色",
 
-  // welcome
-  "welcome.title": { zh: "Busuanzi", en: "Busuanzi", ja: "Busuanzi" },
-  "welcome.subtitle": {
-    zh: "网站访客统计 · 自托管 · 单二进制",
-    en: "Self-hosted visitor counter · single binary",
-    ja: "セルフホスト型訪問カウンター・シングルバイナリ",
+    // welcome
+    "welcome.title": "Busuanzi",
+    "welcome.subtitle": "网站访客统计 · 自托管 · 单二进制",
+    "welcome.no_conn_title": "添加第一个后端连接",
+    "welcome.no_conn_body":
+      "前端纯静态，需要指向你的 busuanzi 后端地址。后端 ADMIN_TOKEN 设了之后才能管理数据。",
+    "welcome.continue": "进入控制台",
+
+    // overview
+    "overview.title": "总览",
+    "overview.sites": "站点",
+    "overview.pages": "页面",
+    "overview.total_pv": "总 PV",
+    "overview.total_uv": "总 UV",
+    "overview.top_sites": "Top 站点",
+    "overview.pv_share": "PV 分布",
+    "overview.recent_activity": "最近活动",
+    "overview.no_activity": "暂无日志",
+
+    // sites
+    "sites.title": "站点",
+    "sites.search_placeholder": "搜索站点…",
+    "sites.col_site": "站点",
+    "sites.col_pv": "PV",
+    "sites.col_uv": "UV",
+    "sites.col_pages": "页面",
+    "sites.empty": "暂无数据",
+    "sites.batch_delete": "批量删除",
+    "sites.selected": "已选",
+
+    // site detail
+    "site.back": "返回站点列表",
+    "site.edit_pv": "编辑 PV",
+    "site.edit_uv": "编辑 UV",
+    "site.rename": "重命名",
+    "site.merge": "合并到…",
+    "site.delete": "删除站点",
+    "site.pages": "页面",
+    "site.danger": "危险操作",
+    "site.danger_hint": "重命名/合并/删除不可撤销（仅编辑 PV/UV 可 undo）",
+
+    // logs
+    "logs.title": "操作日志",
+    "logs.col_time": "时间",
+    "logs.col_action": "操作",
+    "logs.col_detail": "详情",
+    "logs.col_ip": "IP",
+    "logs.empty": "暂无日志",
+    "logs.filter_action": "全部操作",
+
+    // settings
+    "settings.title": "设置",
+    "settings.connections": "连接",
+    "settings.appearance": "外观",
+    "settings.data": "数据",
+    "settings.add": "新增",
+    "settings.import_db": "导入 data.db",
+    "settings.export_db": "导出 data.db",
+    "settings.sitemap_sync": "Sitemap 同步",
+
+    // connection form
+    "conn.name": "名称",
+    "conn.base_url": "后端 URL",
+    "conn.token": "Admin Token",
+    "conn.token_optional": "（可选，用于 admin API）",
+    "conn.test": "测试",
+    "conn.verify_token": "验证 token",
+    "conn.delete": "删除连接",
+    "conn.activate": "切换到此连接",
+    "conn.active": "当前",
+    "conn.save": "保存",
+    "conn.cancel": "取消",
+
+    // common
+    "common.save": "保存",
+    "common.cancel": "取消",
+    "common.delete": "删除",
+    "common.confirm": "确认",
+    "common.loading": "加载中…",
+    "common.error": "出错了",
+    "common.success": "成功",
+    "common.undo": "撤销",
+    "common.search": "搜索",
+    "common.prev": "上一页",
+    "common.next": "下一页",
+    "common.refresh": "刷新",
+
+    // command palette
+    "cmd.title": "命令",
+    "cmd.placeholder": "输入命令或搜索站点…",
+    "cmd.no_results": "无匹配",
+    "cmd.go_overview": "前往总览",
+    "cmd.go_sites": "前往站点列表",
+    "cmd.go_logs": "前往日志",
+    "cmd.go_settings": "前往设置",
+    "cmd.toggle_theme": "切换主题",
+    "cmd.toggle_lang": "切换语言",
+    "cmd.export": "导出 data.db",
   },
-  "welcome.no_conn_title": {
-    zh: "添加第一个后端连接",
-    en: "Add your first backend",
-    ja: "最初のバックエンド接続を追加",
+  en: {
+    "nav.overview": "Overview",
+    "nav.sites": "Sites",
+    "nav.logs": "Logs",
+    "nav.settings": "Settings",
+
+    "top.search": "Search / commands",
+    "top.theme": "Theme",
+    "top.language": "Language",
+    "top.no_connection": "No connection",
+    "top.add_connection": "Add connection",
+
+    "theme.system": "System",
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+
+    "welcome.title": "Busuanzi",
+    "welcome.subtitle": "Self-hosted visitor counter · single binary",
+    "welcome.no_conn_title": "Add your first backend",
+    "welcome.no_conn_body":
+      "This is a static frontend — it needs to know where your backend is. Backend must have ADMIN_TOKEN set for admin features.",
+    "welcome.continue": "Open dashboard",
+
+    "overview.title": "Overview",
+    "overview.sites": "Sites",
+    "overview.pages": "Pages",
+    "overview.total_pv": "Total PV",
+    "overview.total_uv": "Total UV",
+    "overview.top_sites": "Top sites",
+    "overview.pv_share": "PV share",
+    "overview.recent_activity": "Recent activity",
+    "overview.no_activity": "No activity yet",
+
+    "sites.title": "Sites",
+    "sites.search_placeholder": "Filter sites…",
+    "sites.col_site": "Site",
+    "sites.col_pv": "PV",
+    "sites.col_uv": "UV",
+    "sites.col_pages": "Pages",
+    "sites.empty": "No data",
+    "sites.batch_delete": "Batch delete",
+    "sites.selected": "selected",
+
+    "site.back": "Back to sites",
+    "site.edit_pv": "Edit PV",
+    "site.edit_uv": "Edit UV",
+    "site.rename": "Rename",
+    "site.merge": "Merge into…",
+    "site.delete": "Delete site",
+    "site.pages": "Pages",
+    "site.danger": "Danger zone",
+    "site.danger_hint": "Rename/merge/delete are irreversible (only PV/UV edits support undo)",
+
+    "logs.title": "Activity log",
+    "logs.col_time": "Time",
+    "logs.col_action": "Action",
+    "logs.col_detail": "Detail",
+    "logs.col_ip": "IP",
+    "logs.empty": "No logs",
+    "logs.filter_action": "All actions",
+
+    "settings.title": "Settings",
+    "settings.connections": "Connections",
+    "settings.appearance": "Appearance",
+    "settings.data": "Data",
+    "settings.add": "Add",
+    "settings.import_db": "Import data.db",
+    "settings.export_db": "Export data.db",
+    "settings.sitemap_sync": "Sitemap sync",
+
+    "conn.name": "Name",
+    "conn.base_url": "Backend URL",
+    "conn.token": "Admin token",
+    "conn.token_optional": "(optional, for admin API)",
+    "conn.test": "Test",
+    "conn.verify_token": "Verify token",
+    "conn.delete": "Delete",
+    "conn.activate": "Use this",
+    "conn.active": "active",
+    "conn.save": "Save",
+    "conn.cancel": "Cancel",
+
+    "common.save": "Save",
+    "common.cancel": "Cancel",
+    "common.delete": "Delete",
+    "common.confirm": "Confirm",
+    "common.loading": "Loading…",
+    "common.error": "Error",
+    "common.success": "Success",
+    "common.undo": "Undo",
+    "common.search": "Search",
+    "common.prev": "Prev",
+    "common.next": "Next",
+    "common.refresh": "Refresh",
+
+    "cmd.title": "Commands",
+    "cmd.placeholder": "Type a command or search sites…",
+    "cmd.no_results": "No matches",
+    "cmd.go_overview": "Go to overview",
+    "cmd.go_sites": "Go to sites",
+    "cmd.go_logs": "Go to logs",
+    "cmd.go_settings": "Go to settings",
+    "cmd.toggle_theme": "Toggle theme",
+    "cmd.toggle_lang": "Toggle language",
+    "cmd.export": "Export data.db",
   },
-  "welcome.no_conn_body": {
-    zh: "前端纯静态，需要指向你的 busuanzi 后端地址。后端 ADMIN_TOKEN 设了之后才能管理数据。",
-    en: "This is a static frontend — it needs to know where your backend is. Backend must have ADMIN_TOKEN set for admin features.",
-    ja: "これは静的フロントエンドです — バックエンドのURLを指定する必要があります。管理機能にはバックエンドで ADMIN_TOKEN を設定してください。",
+  ja: {
+    "nav.overview": "概要",
+    "nav.sites": "サイト",
+    "nav.logs": "ログ",
+    "nav.settings": "設定",
+
+    "top.search": "検索・コマンド",
+    "top.theme": "テーマ",
+    "top.language": "言語",
+    "top.no_connection": "接続なし",
+    "top.add_connection": "接続を追加",
+
+    "theme.system": "システム",
+    "theme.light": "ライト",
+    "theme.dark": "ダーク",
+
+    "welcome.title": "Busuanzi",
+    "welcome.subtitle": "セルフホスト型訪問カウンター・シングルバイナリ",
+    "welcome.no_conn_title": "最初のバックエンド接続を追加",
+    "welcome.no_conn_body":
+      "これは静的フロントエンドです — バックエンドのURLを指定する必要があります。管理機能にはバックエンドで ADMIN_TOKEN を設定してください。",
+    "welcome.continue": "ダッシュボードを開く",
+
+    "overview.title": "概要",
+    "overview.sites": "サイト",
+    "overview.pages": "ページ",
+    "overview.total_pv": "合計 PV",
+    "overview.total_uv": "合計 UV",
+    "overview.top_sites": "トップサイト",
+    "overview.pv_share": "PV シェア",
+    "overview.recent_activity": "最近のアクティビティ",
+    "overview.no_activity": "アクティビティがありません",
+
+    "sites.title": "サイト",
+    "sites.search_placeholder": "サイトをフィルタ…",
+    "sites.col_site": "サイト",
+    "sites.col_pv": "PV",
+    "sites.col_uv": "UV",
+    "sites.col_pages": "ページ",
+    "sites.empty": "データがありません",
+    "sites.batch_delete": "一括削除",
+    "sites.selected": "選択中",
+
+    "site.back": "サイト一覧に戻る",
+    "site.edit_pv": "PV を編集",
+    "site.edit_uv": "UV を編集",
+    "site.rename": "名前を変更",
+    "site.merge": "マージ先…",
+    "site.delete": "サイトを削除",
+    "site.pages": "ページ",
+    "site.danger": "危険な操作",
+    "site.danger_hint": "名前変更・マージ・削除は元に戻せません（PV/UV 編集のみ undo 可）",
+
+    "logs.title": "アクティビティログ",
+    "logs.col_time": "時刻",
+    "logs.col_action": "操作",
+    "logs.col_detail": "詳細",
+    "logs.col_ip": "IP",
+    "logs.empty": "ログがありません",
+    "logs.filter_action": "すべての操作",
+
+    "settings.title": "設定",
+    "settings.connections": "接続",
+    "settings.appearance": "外観",
+    "settings.data": "データ",
+    "settings.add": "追加",
+    "settings.import_db": "data.db をインポート",
+    "settings.export_db": "data.db をエクスポート",
+    "settings.sitemap_sync": "サイトマップ同期",
+
+    "conn.name": "名前",
+    "conn.base_url": "バックエンド URL",
+    "conn.token": "管理トークン",
+    "conn.token_optional": "（任意、管理 API 用）",
+    "conn.test": "テスト",
+    "conn.verify_token": "トークンを検証",
+    "conn.delete": "接続を削除",
+    "conn.activate": "これを使用",
+    "conn.active": "現在",
+    "conn.save": "保存",
+    "conn.cancel": "キャンセル",
+
+    "common.save": "保存",
+    "common.cancel": "キャンセル",
+    "common.delete": "削除",
+    "common.confirm": "確認",
+    "common.loading": "読み込み中…",
+    "common.error": "エラー",
+    "common.success": "成功",
+    "common.undo": "元に戻す",
+    "common.search": "検索",
+    "common.prev": "前へ",
+    "common.next": "次へ",
+    "common.refresh": "更新",
+
+    "cmd.title": "コマンド",
+    "cmd.placeholder": "コマンドを入力またはサイトを検索…",
+    "cmd.no_results": "該当なし",
+    "cmd.go_overview": "概要へ",
+    "cmd.go_sites": "サイト一覧へ",
+    "cmd.go_logs": "ログへ",
+    "cmd.go_settings": "設定へ",
+    "cmd.toggle_theme": "テーマを切り替え",
+    "cmd.toggle_lang": "言語を切り替え",
+    "cmd.export": "data.db をエクスポート",
   },
-  "welcome.continue": { zh: "进入控制台", en: "Open dashboard", ja: "ダッシュボードを開く" },
-
-  // overview
-  "overview.title": { zh: "总览", en: "Overview", ja: "概要" },
-  "overview.sites": { zh: "站点", en: "Sites", ja: "サイト" },
-  "overview.pages": { zh: "页面", en: "Pages", ja: "ページ" },
-  "overview.total_pv": { zh: "总 PV", en: "Total PV", ja: "合計 PV" },
-  "overview.total_uv": { zh: "总 UV", en: "Total UV", ja: "合計 UV" },
-  "overview.top_sites": { zh: "Top 站点", en: "Top sites", ja: "トップサイト" },
-  "overview.pv_share": { zh: "PV 分布", en: "PV share", ja: "PV シェア" },
-  "overview.recent_activity": { zh: "最近活动", en: "Recent activity", ja: "最近のアクティビティ" },
-  "overview.no_activity": { zh: "暂无日志", en: "No activity yet", ja: "アクティビティがありません" },
-
-  // sites
-  "sites.title": { zh: "站点", en: "Sites", ja: "サイト" },
-  "sites.search_placeholder": { zh: "搜索站点…", en: "Filter sites…", ja: "サイトをフィルタ…" },
-  "sites.col_site": { zh: "站点", en: "Site", ja: "サイト" },
-  "sites.col_pv": { zh: "PV", en: "PV", ja: "PV" },
-  "sites.col_uv": { zh: "UV", en: "UV", ja: "UV" },
-  "sites.col_pages": { zh: "页面", en: "Pages", ja: "ページ" },
-  "sites.empty": { zh: "暂无数据", en: "No data", ja: "データがありません" },
-  "sites.batch_delete": { zh: "批量删除", en: "Batch delete", ja: "一括削除" },
-  "sites.selected": { zh: "已选", en: "selected", ja: "選択中" },
-
-  // site detail
-  "site.back": { zh: "返回站点列表", en: "Back to sites", ja: "サイト一覧に戻る" },
-  "site.edit_pv": { zh: "编辑 PV", en: "Edit PV", ja: "PV を編集" },
-  "site.edit_uv": { zh: "编辑 UV", en: "Edit UV", ja: "UV を編集" },
-  "site.rename": { zh: "重命名", en: "Rename", ja: "名前を変更" },
-  "site.merge": { zh: "合并到…", en: "Merge into…", ja: "マージ先…" },
-  "site.delete": { zh: "删除站点", en: "Delete site", ja: "サイトを削除" },
-  "site.pages": { zh: "页面", en: "Pages", ja: "ページ" },
-  "site.danger": { zh: "危险操作", en: "Danger zone", ja: "危険な操作" },
-  "site.danger_hint": {
-    zh: "重命名/合并/删除不可撤销（仅编辑 PV/UV 可 undo）",
-    en: "Rename/merge/delete are irreversible (only PV/UV edits support undo)",
-    ja: "名前変更・マージ・削除は元に戻せません（PV/UV 編集のみ undo 可）",
-  },
-
-  // logs
-  "logs.title": { zh: "操作日志", en: "Activity log", ja: "アクティビティログ" },
-  "logs.col_time": { zh: "时间", en: "Time", ja: "時刻" },
-  "logs.col_action": { zh: "操作", en: "Action", ja: "操作" },
-  "logs.col_detail": { zh: "详情", en: "Detail", ja: "詳細" },
-  "logs.col_ip": { zh: "IP", en: "IP", ja: "IP" },
-  "logs.empty": { zh: "暂无日志", en: "No logs", ja: "ログがありません" },
-  "logs.filter_action": { zh: "全部操作", en: "All actions", ja: "すべての操作" },
-
-  // settings
-  "settings.title": { zh: "设置", en: "Settings", ja: "設定" },
-  "settings.connections": { zh: "连接", en: "Connections", ja: "接続" },
-  "settings.appearance": { zh: "外观", en: "Appearance", ja: "外観" },
-  "settings.data": { zh: "数据", en: "Data", ja: "データ" },
-  "settings.add": { zh: "新增", en: "Add", ja: "追加" },
-  "settings.import_db": { zh: "导入 data.db", en: "Import data.db", ja: "data.db をインポート" },
-  "settings.export_db": { zh: "导出 data.db", en: "Export data.db", ja: "data.db をエクスポート" },
-  "settings.sitemap_sync": { zh: "Sitemap 同步", en: "Sitemap sync", ja: "サイトマップ同期" },
-
-  // connection form
-  "conn.name": { zh: "名称", en: "Name", ja: "名前" },
-  "conn.base_url": { zh: "后端 URL", en: "Backend URL", ja: "バックエンド URL" },
-  "conn.token": { zh: "Admin Token", en: "Admin token", ja: "管理トークン" },
-  "conn.token_optional": {
-    zh: "（可选，用于 admin API）",
-    en: "(optional, for admin API)",
-    ja: "（任意、管理 API 用）",
-  },
-  "conn.test": { zh: "测试", en: "Test", ja: "テスト" },
-  "conn.verify_token": { zh: "验证 token", en: "Verify token", ja: "トークンを検証" },
-  "conn.delete": { zh: "删除连接", en: "Delete", ja: "接続を削除" },
-  "conn.activate": { zh: "切换到此连接", en: "Use this", ja: "これを使用" },
-  "conn.active": { zh: "当前", en: "active", ja: "現在" },
-  "conn.save": { zh: "保存", en: "Save", ja: "保存" },
-  "conn.cancel": { zh: "取消", en: "Cancel", ja: "キャンセル" },
-
-  // common
-  "common.save": { zh: "保存", en: "Save", ja: "保存" },
-  "common.cancel": { zh: "取消", en: "Cancel", ja: "キャンセル" },
-  "common.delete": { zh: "删除", en: "Delete", ja: "削除" },
-  "common.confirm": { zh: "确认", en: "Confirm", ja: "確認" },
-  "common.loading": { zh: "加载中…", en: "Loading…", ja: "読み込み中…" },
-  "common.error": { zh: "出错了", en: "Error", ja: "エラー" },
-  "common.success": { zh: "成功", en: "Success", ja: "成功" },
-  "common.undo": { zh: "撤销", en: "Undo", ja: "元に戻す" },
-  "common.search": { zh: "搜索", en: "Search", ja: "検索" },
-  "common.prev": { zh: "上一页", en: "Prev", ja: "前へ" },
-  "common.next": { zh: "下一页", en: "Next", ja: "次へ" },
-  "common.refresh": { zh: "刷新", en: "Refresh", ja: "更新" },
-
-  // command palette
-  "cmd.title": { zh: "命令", en: "Commands", ja: "コマンド" },
-  "cmd.placeholder": {
-    zh: "输入命令或搜索站点…",
-    en: "Type a command or search sites…",
-    ja: "コマンドを入力またはサイトを検索…",
-  },
-  "cmd.no_results": { zh: "无匹配", en: "No matches", ja: "該当なし" },
-  "cmd.go_overview": { zh: "前往总览", en: "Go to overview", ja: "概要へ" },
-  "cmd.go_sites": { zh: "前往站点列表", en: "Go to sites", ja: "サイト一覧へ" },
-  "cmd.go_logs": { zh: "前往日志", en: "Go to logs", ja: "ログへ" },
-  "cmd.go_settings": { zh: "前往设置", en: "Go to settings", ja: "設定へ" },
-  "cmd.toggle_theme": { zh: "切换主题", en: "Toggle theme", ja: "テーマを切り替え" },
-  "cmd.toggle_lang": { zh: "切换语言", en: "Toggle language", ja: "言語を切り替え" },
-  "cmd.export": { zh: "导出 data.db", en: "Export data.db", ja: "data.db をエクスポート" },
 } as const;
 
-export type DictKey = keyof typeof dict;
+export type Locale = keyof typeof dict;
+export type DictKey = keyof (typeof dict)["zh"];
 
-const LOCALES: readonly Locale[] = ["zh", "en", "ja"] as const;
+export const LOCALE_LIST: readonly Locale[] = ["zh", "en", "ja"] as const;
 
 function read(): Locale {
   if (typeof localStorage === "undefined") return "zh";
   const v = localStorage.getItem(KEY);
-  return LOCALES.includes(v as Locale) ? (v as Locale) : "zh";
+  return LOCALE_LIST.includes(v as Locale) ? (v as Locale) : "zh";
 }
 
 const [locale, setLocaleSignal] = createSignal<Locale>(read());
-
 export { locale };
 
-const HTML_LANG: Record<Locale, string> = {
-  zh: "zh-CN",
-  en: "en",
-  ja: "ja",
-};
+const HTML_LANG: Record<Locale, string> = { zh: "zh-CN", en: "en", ja: "ja" };
 
 export function setLocale(l: Locale) {
   setLocaleSignal(l);
@@ -172,29 +365,33 @@ export function setLocale(l: Locale) {
   if (typeof document !== "undefined") document.documentElement.lang = HTML_LANG[l];
 }
 
-export function t(key: DictKey): string {
-  return dict[key][locale()];
+// Reactive translator. Solid's signal read inside the getter makes it
+// re-evaluate whenever the active locale changes.
+const primary = i18n.translator(() => dict[locale()], i18n.resolveTemplate);
+const fallback = i18n.translator(() => dict.zh, i18n.resolveTemplate);
+
+/**
+ * Translate a key. Supports `{{var}}` interpolation:
+ * `t("greeting", { name: "Ada" })` against `"hello {{name}}"`.
+ * Missing keys fall back to the `zh` source, then to the key itself.
+ */
+export function t(key: DictKey, params?: Record<string, string | number>): string {
+  // @solid-primitives/i18n's resolver returns `string | undefined`; fall through.
+  return primary(key, params) ?? fallback(key, params) ?? (key as string);
 }
 
 /** Cycle through locales: zh → en → ja → zh */
 export function toggleLocale() {
-  const cur = locale();
-  const i = LOCALES.indexOf(cur);
-  const next = LOCALES[(i + 1) % LOCALES.length] ?? "zh";
-  setLocale(next);
+  const i = LOCALE_LIST.indexOf(locale());
+  setLocale(LOCALE_LIST[(i + 1) % LOCALE_LIST.length] ?? "zh");
 }
 
-/** Short label for compact UIs (top-bar button etc.) */
 const SHORT_LABELS: Record<Locale, string> = { zh: "中", en: "EN", ja: "日" };
 export function localeShortLabel(l: Locale = locale()): string {
   return SHORT_LABELS[l];
 }
 
-/** Full human label (settings page etc.) */
 const FULL_LABELS: Record<Locale, string> = { zh: "中文", en: "English", ja: "日本語" };
 export function localeFullLabel(l: Locale): string {
   return FULL_LABELS[l];
 }
-
-/** Ordered locale list for menus */
-export const LOCALE_LIST = LOCALES;
