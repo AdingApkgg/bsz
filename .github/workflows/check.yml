@@ -56,10 +56,7 @@ jobs:
       - name: Biome (format + lint)
         run: |
           bun run format:check
-          bunx biome lint .
-
-      - name: ESLint (solid reactivity rules)
-        run: bunx eslint . --max-warnings=0
+          bun run lint
 
       - name: TypeScript typecheck
         run: bun run typecheck

@@ -116,7 +116,6 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
   // The dialog mounts fresh whenever the edited connection changes (parent
   // gates it with <Show when={editing()}>), so a one-shot snapshot of props is
   // exactly what we want for the form's initial values.
-  // eslint-disable-next-line solid/reactivity
   const initial = props.connection;
   const editing = !!initial;
   const [name, setName] = createSignal(initial?.name ?? "");

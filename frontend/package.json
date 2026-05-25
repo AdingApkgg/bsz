@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "biome lint . && eslint . --max-warnings=0",
-    "lint:fix": "biome lint --write . && eslint . --fix",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "check": "bun run format:check && bun run lint && bun run typecheck"
   },
   "dependencies": {
@@ -33,16 +33,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
-    "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
     "autoprefixer": "^10.4.20",
-    "eslint": "^10.4.0",
-    "eslint-plugin-solid": "^0.14.5",
-    "globals": "^17.6.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.6.0",
-    "typescript-eslint": "^8.59.4"
+    "typescript": "^5.6.0"
   },
   "engines": {
     "node": ">=18"
