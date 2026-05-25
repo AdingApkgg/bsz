@@ -98,7 +98,7 @@ const SitesPage: Component = () => {
       setConfirmBatch(false);
       refetch();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "delete failed");
+      toast.error(e instanceof Error ? e.message : t("common.delete_failed"));
     }
   }
 

@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { TextField, TextFieldInput, TextFieldLabel } from "~/components/ui/text-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { addConnection, testConnection, verifyToken, activeConnection } from "~/lib/connections";
-import { locale, t, toggleLocale } from "~/lib/i18n";
+import { localeShortLabel, t, toggleLocale } from "~/lib/i18n";
 import { toast } from "solid-sonner";
 
 const Welcome: Component = () => {
@@ -18,7 +18,7 @@ const Welcome: Component = () => {
 
   async function runTest() {
     const url = baseUrl().trim();
-    if (!url) return toast.error("URL required");
+    if (!url) return toast.error(t("common.url_required"));
     setBusy(true);
     try {
       const ping = await testConnection({ baseUrl: url });
@@ -30,13 +30,7 @@ const Welcome: Component = () => {
         const v = await verifyToken({ baseUrl: url, token: token().trim() });
         setTest(v);
       } else {
-        setTest({
-          ok: true,
-          message:
-            locale() === "zh"
-              ? "可达（token 未填，admin 不可用）"
-              : "Reachable (admin disabled without token)",
-        });
+        setTest({ ok: true, message: t("welcome.test_no_token") });
       }
     } finally {
       setBusy(false);
@@ -45,7 +39,7 @@ const Welcome: Component = () => {
 
   async function save() {
     const url = baseUrl().trim();
-    if (!url) return toast.error("URL required");
+    if (!url) return toast.error(t("common.url_required"));
     addConnection({
       name: name().trim() || new URL(url).host,
       baseUrl: url,
@@ -60,7 +54,7 @@ const Welcome: Component = () => {
       <Title>Busuanzi · {t("welcome.no_conn_title")}</Title>
       <div class="absolute right-4 top-4 flex items-center gap-2">
         <Button size="sm" variant="ghost" onClick={toggleLocale}>
-          {locale() === "zh" ? "EN" : "中文"}
+          {localeShortLabel()}
         </Button>
         <Show when={activeConnection()}>
           <A href="/app/overview">
@@ -133,11 +127,7 @@ const Welcome: Component = () => {
         </Card>
 
         <div class="mt-8 text-center text-xs text-muted-foreground">
-          <p>
-            {locale() === "zh"
-              ? "前端纯静态，可部署到 GitHub Pages / Cloudflare Pages / 任意静态托管。"
-              : "Frontend is pure static — deploy to GitHub Pages, Cloudflare Pages, or any static host."}
-          </p>
+          <p>{t("welcome.deploy_hint")}</p>
           <p class="mt-1">
             <a href="https://github.com/AdingApkgg/bsz" rel="noopener" class="hover:text-foreground">
               GitHub
@@ -148,7 +138,7 @@ const Welcome: Component = () => {
               rel="noopener"
               class="hover:text-foreground"
             >
-              {locale() === "zh" ? "后端文档" : "Backend docs"}
+              {t("welcome.backend_docs")}
             </a>
           </p>
         </div>

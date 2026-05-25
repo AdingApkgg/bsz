@@ -58,11 +58,7 @@ const ConnectionsCard: Component = () => {
       <CardHeader class="flex flex-row items-center justify-between">
         <div>
           <CardTitle>{t("settings.connections")}</CardTitle>
-          <CardDescription>
-            {locale() === "zh"
-              ? "管理你要连接的 busuanzi 后端。"
-              : "Manage which busuanzi backends you connect to."}
-          </CardDescription>
+          <CardDescription>{t("settings.connections_hint")}</CardDescription>
         </div>
         <Button size="sm" onClick={() => setAddOpen(true)}>
           + {t("settings.add")}
@@ -98,7 +94,7 @@ const ConnectionsCard: Component = () => {
           )}
         </For>
         <Show when={connections().length === 0}>
-          <p class="py-6 text-center text-sm text-muted-foreground">No connections yet.</p>
+          <p class="py-6 text-center text-sm text-muted-foreground">{t("settings.no_connections")}</p>
         </Show>
       </CardContent>
 
@@ -143,7 +139,7 @@ const ConnectionDialog: Component<{ connection?: Connection; onClose: () => void
 
   function save() {
     const url = baseUrl().trim();
-    if (!url) return toast.error("URL required");
+    if (!url) return toast.error(t("common.url_required"));
     const label =
       name().trim() ||
       (() => {
@@ -277,11 +273,7 @@ const DataCard: Component = () => {
       <CardContent class="space-y-6">
         <Show
           when={hasToken()}
-          fallback={
-            <p class="text-sm text-muted-foreground">
-              Configure ADMIN_TOKEN on the active connection to enable data tools.
-            </p>
-          }
+          fallback={<p class="text-sm text-muted-foreground">{t("settings.no_admin_token_hint")}</p>}
         >
           <ExportSection />
           <Separator />
@@ -298,10 +290,10 @@ const ExportSection: Component = () => (
   <div class="flex items-center justify-between gap-4">
     <div>
       <div class="text-sm font-medium">{t("settings.export_db")}</div>
-      <div class="text-xs text-muted-foreground">Download a snapshot of data.db</div>
+      <div class="text-xs text-muted-foreground">{t("settings.export_hint")}</div>
     </div>
     <Button size="sm" variant="outline" onClick={() => (window.location.href = exportDownloadUrl())}>
-      Download
+      {t("settings.download")}
     </Button>
   </div>
 );
@@ -312,17 +304,17 @@ const ImportSection: Component = () => {
 
   async function go() {
     const f = file();
-    if (!f) return toast.error("file required");
+    if (!f) return toast.error(t("common.file_required"));
     setBusy(true);
     try {
       const fd = new FormData();
       fd.append("file", f);
       const r = await api.upload<unknown>("/import", fd);
-      if (!r.success) throw new Error(r.message ?? "import failed");
+      if (!r.success) throw new Error(r.message ?? t("common.import_failed"));
       toast.success(r.message ?? t("common.success"));
       setFile(null);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "import failed");
+      toast.error(e instanceof Error ? e.message : t("common.import_failed"));
     } finally {
       setBusy(false);
     }
@@ -332,7 +324,7 @@ const ImportSection: Component = () => {
     <div class="space-y-2">
       <div>
         <div class="text-sm font-medium">{t("settings.import_db")}</div>
-        <div class="text-xs text-amber-500">⚠ Overwrites existing data</div>
+        <div class="text-xs text-amber-500">{t("settings.import_warn")}</div>
       </div>
       <div class="flex items-center gap-2">
         <input
@@ -342,7 +334,7 @@ const ImportSection: Component = () => {
           class="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm file:mr-2 file:rounded file:border-0 file:bg-transparent file:text-sm file:font-medium"
         />
         <Button size="sm" disabled={busy() || !file()} onClick={go}>
-          {busy() ? "…" : "Import"}
+          {busy() ? "…" : t("settings.import_btn")}
         </Button>
       </div>
     </div>
@@ -372,12 +364,12 @@ const SyncSection: Component = () => {
   async function go() {
     const u = url().trim();
     const f = file();
-    if (!u && !f) return toast.error("URL or file required");
+    if (!u && !f) return toast.error(t("common.url_or_file_required"));
 
     setState({ progress: { total: 0, current: 0, imported: 0, errors: 0 }, logs: [], running: true });
     let sseUrl: string;
     if (f) {
-      addLog("Parsing uploaded XML…");
+      addLog(t("settings.parsing_xml"));
       const fd = new FormData();
       fd.append("file", f);
       try {
@@ -388,19 +380,19 @@ const SyncSection: Component = () => {
         });
         const r = await res.json();
         if (!r.success) {
-          addLog(r.message ?? "upload failed", { error: true });
+          addLog(r.message ?? t("common.upload_failed"), { error: true });
           setState((s) => ({ ...s, running: false }));
           return;
         }
-        addLog(`Found ${r.url_count} URLs`);
+        addLog(t("settings.found_urls", { n: r.url_count }));
         sseUrl = syncEventSourceUrl({ sync_id: r.sync_id, concurrency: String(concurrency()) });
       } catch (e: unknown) {
-        addLog(e instanceof Error ? e.message : "upload failed", { error: true });
+        addLog(e instanceof Error ? e.message : t("common.upload_failed"), { error: true });
         setState((s) => ({ ...s, running: false }));
         return;
       }
     } else {
-      addLog("Fetching sitemap…");
+      addLog(t("settings.fetching_sitemap"));
       sseUrl = syncEventSourceUrl({ sitemap_url: u, concurrency: String(concurrency()) });
     }
 
@@ -423,7 +415,7 @@ const SyncSection: Component = () => {
       else if (d.message) addLog(d.message);
     });
     sse.addEventListener("error", (e: Event) => {
-      let msg = "sync error";
+      let msg = t("settings.sync_error");
       try {
         msg = JSON.parse((e as MessageEvent<string>).data).message;
       } catch {
@@ -442,7 +434,7 @@ const SyncSection: Component = () => {
     });
     sse.onerror = () => {
       if (!state().running) return;
-      addLog("connection lost", { error: true });
+      addLog(t("settings.connection_lost"), { error: true });
       setState((s) => ({ ...s, running: false }));
       sse.close();
     };
@@ -456,9 +448,7 @@ const SyncSection: Component = () => {
   return (
     <div class="space-y-2">
       <div class="text-sm font-medium">{t("settings.sitemap_sync")}</div>
-      <p class="text-xs text-muted-foreground">
-        Pull historical stats from busuanzi.ibruce.info using a sitemap (incremental merge).
-      </p>
+      <p class="text-xs text-muted-foreground">{t("settings.sync_hint")}</p>
       <div class="flex gap-2">
         <input
           type="url"
@@ -476,7 +466,7 @@ const SyncSection: Component = () => {
           onInput={(e) => setConcurrency(Math.max(1, Math.min(10, +e.currentTarget.value || 1)))}
         />
         <Button size="sm" disabled={state().running} onClick={go}>
-          {state().running ? "…" : "Sync"}
+          {state().running ? "…" : t("settings.sync_btn")}
         </Button>
       </div>
       <div class="flex items-center gap-2">

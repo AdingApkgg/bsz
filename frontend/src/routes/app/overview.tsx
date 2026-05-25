@@ -7,7 +7,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { BarChart, DonutChart } from "~/components/ui/charts";
 import { api, type SiteKey, type Stats, type LogEntry } from "~/lib/api";
 import { activeConnection } from "~/lib/connections";
-import { t, locale } from "~/lib/i18n";
+import { t } from "~/lib/i18n";
 
 const Overview: Component = () => {
   const c = () => activeConnection();
@@ -67,7 +67,7 @@ const Overview: Component = () => {
     const labels = arr.map((k) => (k.site_key.length > 14 ? `${k.site_key.slice(0, 12)}…` : k.site_key));
     const data = arr.map((k) => k.site_pv || 0);
     if (others > 0) {
-      labels.push(locale() === "zh" ? "其他" : "Other");
+      labels.push(t("overview.other"));
       data.push(others);
       colors.push("#52525b");
     }
@@ -90,9 +90,7 @@ const Overview: Component = () => {
       <Show when={!hasToken()}>
         <Card class="mb-6 border-amber-500/30 bg-amber-500/5">
           <CardContent class="py-4 text-sm">
-            {locale() === "zh"
-              ? "当前连接未配置 admin token，无法查看统计数据。"
-              : "This connection has no admin token configured."}
+            {t("overview.no_admin_token")}
             <A href="/app/settings" class="ml-2 text-primary underline">
               {t("settings.connections")}
             </A>

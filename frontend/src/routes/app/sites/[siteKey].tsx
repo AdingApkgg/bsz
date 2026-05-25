@@ -70,7 +70,7 @@ const SiteDetail: Component = () => {
       );
       refetchSite();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "save failed");
+      toast.error(e instanceof Error ? e.message : t("common.save_failed"));
     }
   }
 
@@ -83,25 +83,25 @@ const SiteDetail: Component = () => {
 
   async function doRename() {
     const target = newKey().trim();
-    if (!target) return toast.error("required");
+    if (!target) return toast.error(t("common.required"));
     try {
       const r = await api.post<unknown>("/keys/rename", { old_key: siteKey(), new_key: target });
       toast.success(r.message ?? t("common.success"));
       navigate(`/app/sites/${encodeURIComponent(target)}`);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "rename failed");
+      toast.error(e instanceof Error ? e.message : t("common.rename_failed"));
     }
   }
 
   async function doMerge() {
     const target = mergeTarget().trim();
-    if (!target) return toast.error("required");
+    if (!target) return toast.error(t("common.required"));
     try {
       const r = await api.post<unknown>("/keys/merge", { source_key: siteKey(), target_key: target });
       toast.success(r.message ?? t("common.success"));
       navigate("/app/sites");
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "merge failed");
+      toast.error(e instanceof Error ? e.message : t("common.merge_failed"));
     }
   }
 
@@ -111,7 +111,7 @@ const SiteDetail: Component = () => {
       toast.success(t("common.success"));
       navigate("/app/sites");
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "delete failed");
+      toast.error(e instanceof Error ? e.message : t("common.delete_failed"));
     }
   }
 
@@ -138,7 +138,7 @@ const SiteDetail: Component = () => {
       setEditingPage(null);
       refetchPages();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "save failed");
+      toast.error(e instanceof Error ? e.message : t("common.save_failed"));
     }
   }
 
@@ -150,7 +150,7 @@ const SiteDetail: Component = () => {
       toast.success(t("common.success"));
       refetchPages();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "delete failed");
+      toast.error(e instanceof Error ? e.message : t("common.delete_failed"));
     }
   }
 
@@ -356,7 +356,7 @@ const SiteDetail: Component = () => {
             <DialogDescription>{siteKey()} → ?</DialogDescription>
           </DialogHeader>
           <TextField value={newKey()} onChange={setNewKey}>
-            <TextFieldLabel>{t("conn.name")}</TextFieldLabel>
+            <TextFieldLabel>{t("site.new_key")}</TextFieldLabel>
             <TextFieldInput placeholder="example.com" />
           </TextField>
           <DialogFooter>
@@ -376,7 +376,7 @@ const SiteDetail: Component = () => {
             <DialogDescription>{siteKey()} → ?</DialogDescription>
           </DialogHeader>
           <TextField value={mergeTarget()} onChange={setMergeTarget}>
-            <TextFieldLabel>{t("conn.name")}</TextFieldLabel>
+            <TextFieldLabel>{t("site.merge_target")}</TextFieldLabel>
             <TextFieldInput placeholder="example.com" />
           </TextField>
           <DialogFooter>

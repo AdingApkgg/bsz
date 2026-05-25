@@ -7,24 +7,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { Badge } from "~/components/ui/badge";
 import { api, type LogEntry } from "~/lib/api";
 import { activeConnection } from "~/lib/connections";
-import { t, locale } from "~/lib/i18n";
+import { type DictKey, t } from "~/lib/i18n";
 import { LOGS_PAGE_SIZE } from "~/lib/config";
 
-const ACTION_LABELS_ZH: Record<string, string> = {
-  delete_site: "删除站点",
-  delete_page: "删除页面",
-  edit_site: "编辑站点",
-  edit_page: "编辑页面",
-  rename_site: "重命名",
-  merge_site: "合并站点",
-  import: "导入",
-  export: "导出",
-  batch_delete_sites: "批量删除站点",
-  batch_delete_pages: "批量删除页面",
-};
+const KNOWN_ACTIONS = new Set([
+  "delete_site",
+  "delete_page",
+  "edit_site",
+  "edit_page",
+  "rename_site",
+  "merge_site",
+  "import",
+  "export",
+  "batch_delete_sites",
+  "batch_delete_pages",
+]);
 
-function actionLabel(a: string) {
-  return locale() === "zh" ? (ACTION_LABELS_ZH[a] ?? a) : a;
+function actionLabel(a: string): string {
+  return KNOWN_ACTIONS.has(a) ? t(`log.action.${a}` as DictKey) : a;
 }
 
 function actionVariant(a: string): "default" | "secondary" | "warning" | "error" {
