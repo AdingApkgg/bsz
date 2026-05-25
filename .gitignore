@@ -1,9 +1,21 @@
-# Build
+# Rust build
 /target
+/backend/target
+
+# Node
+node_modules/
+**/node_modules
+
+# Frontend build outputs
+.output/
+.vinxi/
+.solid/
+dist/
+build/
 
 # Environment
 .env
-!example/.env
+!**/example/.env
 
 # Data files
 data.db
