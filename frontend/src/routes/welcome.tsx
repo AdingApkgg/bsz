@@ -5,7 +5,14 @@ import { Button } from "~/components/ui/button";
 import { TextField, TextFieldInput, TextFieldLabel } from "~/components/ui/text-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { addConnection, testConnection, verifyToken, activeConnection } from "~/lib/connections";
-import { localeShortLabel, t, toggleLocale } from "~/lib/i18n";
+import { LOCALE_LIST, locale, localeFullLabel, localeShortLabel, setLocale, t } from "~/lib/i18n";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { For } from "solid-js";
 import { toast } from "solid-sonner";
 
 const Welcome: Component = () => {
@@ -53,9 +60,28 @@ const Welcome: Component = () => {
     <main class="min-h-screen bg-background">
       <Title>Busuanzi · {t("welcome.no_conn_title")}</Title>
       <div class="absolute right-4 top-4 flex items-center gap-2">
-        <Button size="sm" variant="ghost" onClick={toggleLocale}>
-          {localeShortLabel()}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
+            as={(p: any) => (
+              <Button {...p} size="sm" variant="ghost" title={t("top.language")}>
+                {localeShortLabel()}
+              </Button>
+            )}
+          />
+          <DropdownMenuContent class="w-36">
+            <For each={LOCALE_LIST}>
+              {(v) => (
+                <DropdownMenuItem onSelect={() => setLocale(v)} class="flex items-center justify-between">
+                  <span>{localeFullLabel(v)}</span>
+                  <Show when={locale() === v}>
+                    <span class="text-primary">●</span>
+                  </Show>
+                </DropdownMenuItem>
+              )}
+            </For>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Show when={activeConnection()}>
           <A href="/app/overview">
             <Button size="sm" variant="outline">

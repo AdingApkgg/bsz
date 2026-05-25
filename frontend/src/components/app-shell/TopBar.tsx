@@ -1,6 +1,14 @@
 import { For, Show, createSignal, type Component } from "solid-js";
 import { activeConnection, connections, setActive } from "~/lib/connections";
-import { type DictKey, localeShortLabel, t, toggleLocale } from "~/lib/i18n";
+import {
+  type DictKey,
+  LOCALE_LIST,
+  locale,
+  localeFullLabel,
+  localeShortLabel,
+  setLocale,
+  t,
+} from "~/lib/i18n";
 import { theme, setTheme, type Theme } from "~/lib/theme";
 import { Button } from "~/components/ui/button";
 import {
@@ -34,15 +42,7 @@ const TopBar: Component<Props> = (props) => {
       </button>
 
       <ThemeMenu />
-      <Button
-        size="sm"
-        variant="ghost"
-        class="h-8 px-2.5 text-xs"
-        onClick={toggleLocale}
-        title={t("top.language")}
-      >
-        {localeShortLabel()}
-      </Button>
+      <LanguageMenu />
 
       <Show when={!active()}>
         <A href="/welcome">
@@ -105,6 +105,33 @@ const ConnectionMenu: Component = () => {
         <DropdownMenuItem onSelect={() => window.location.assign("/app/settings")}>
           {t("settings.connections")}…
         </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const LanguageMenu: Component = () => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
+        as={(p: any) => (
+          <Button {...p} size="sm" variant="ghost" class="h-8 px-2.5 text-xs" title={t("top.language")}>
+            {localeShortLabel()}
+          </Button>
+        )}
+      />
+      <DropdownMenuContent class="w-36">
+        <For each={LOCALE_LIST}>
+          {(v) => (
+            <DropdownMenuItem onSelect={() => setLocale(v)} class="flex items-center justify-between">
+              <span>{localeFullLabel(v)}</span>
+              <Show when={locale() === v}>
+                <span class="text-primary">●</span>
+              </Show>
+            </DropdownMenuItem>
+          )}
+        </For>
       </DropdownMenuContent>
     </DropdownMenu>
   );

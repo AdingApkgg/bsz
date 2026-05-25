@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { t } from "./i18n";
 
 export type Connection = {
   id: string;
@@ -37,9 +38,10 @@ function loadAndSeed(): { list: Connection[]; active: string | null } {
     // localStorage may be corrupt or unparseable — fall through to seeding.
   }
   // Seed from env var on first run, and persist so the IDs stay stable
-  // across reloads / signal re-reads.
+  // across reloads / signal re-reads. The user will almost certainly rename
+  // this immediately, so we keep the seed label locale-neutral.
   if (ENV_DEFAULT) {
-    const seed: Connection = { id: uid(), name: "默认 / Default", baseUrl: ENV_DEFAULT, token: "" };
+    const seed: Connection = { id: uid(), name: "Default", baseUrl: ENV_DEFAULT, token: "" };
     localStorage.setItem(STORAGE_KEY, JSON.stringify([seed]));
     localStorage.setItem(ACTIVE_KEY, seed.id);
     return { list: [seed], active: seed.id };
@@ -105,13 +107,10 @@ export async function testConnection(
 ): Promise<{ ok: boolean; message: string }> {
   try {
     const res = await fetch(`${normalize(c.baseUrl)}/ping`, { method: "GET" });
-    if (res.ok) {
-      const txt = await res.text().catch(() => "");
-      return { ok: true, message: txt || "ok" };
-    }
+    if (res.ok) return { ok: true, message: t("conn.test_ok") };
     return { ok: false, message: `HTTP ${res.status}` };
   } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "unreachable" };
+    return { ok: false, message: e instanceof Error ? e.message : t("conn.test_unreachable") };
   }
 }
 
@@ -119,16 +118,16 @@ export async function testConnection(
 export async function verifyToken(
   c: Pick<Connection, "baseUrl" | "token">,
 ): Promise<{ ok: boolean; message: string }> {
-  if (!c.token) return { ok: false, message: "token 为空" };
+  if (!c.token) return { ok: false, message: t("conn.test_token_empty") };
   try {
     const res = await fetch(`${normalize(c.baseUrl)}/api/admin/stats`, {
       headers: { Authorization: `Bearer ${c.token}` },
     });
-    if (res.ok) return { ok: true, message: "ok" };
-    if (res.status === 401) return { ok: false, message: "token 无效" };
-    if (res.status === 404) return { ok: false, message: "后端未启用 admin（ADMIN_TOKEN 为空？）" };
+    if (res.ok) return { ok: true, message: t("conn.test_ok") };
+    if (res.status === 401) return { ok: false, message: t("conn.test_token_invalid") };
+    if (res.status === 404) return { ok: false, message: t("conn.test_admin_not_mounted") };
     return { ok: false, message: `HTTP ${res.status}` };
   } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "unreachable" };
+    return { ok: false, message: e instanceof Error ? e.message : t("conn.test_unreachable") };
   }
 }

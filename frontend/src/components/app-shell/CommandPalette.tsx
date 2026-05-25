@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "~/components/ui/command";
-import { t, toggleLocale } from "~/lib/i18n";
+import { LOCALE_LIST, locale, localeFullLabel, setLocale, t } from "~/lib/i18n";
 import { theme, setTheme, type Theme } from "~/lib/theme";
 import { activeConnection, connections, setActive } from "~/lib/connections";
 import { api, type SiteKey, exportDownloadUrl } from "~/lib/api";
@@ -62,14 +62,26 @@ const CommandPalette: Component<Props> = (props) => {
           >
             {t("cmd.toggle_theme")}
           </CommandItem>
-          <CommandItem
-            onSelect={() => {
-              toggleLocale();
-              props.onOpenChange(false);
-            }}
-          >
-            {t("cmd.toggle_lang")}
-          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading={t("top.language")}>
+          <For each={LOCALE_LIST}>
+            {(v) => (
+              <CommandItem
+                onSelect={() => {
+                  setLocale(v);
+                  props.onOpenChange(false);
+                }}
+              >
+                <span class="flex-1">{localeFullLabel(v)}</span>
+                <Show when={locale() === v}>
+                  <span class="text-primary">●</span>
+                </Show>
+              </CommandItem>
+            )}
+          </For>
         </CommandGroup>
 
         <Show when={connections().length > 1}>
