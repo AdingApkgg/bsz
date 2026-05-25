@@ -1,6 +1,6 @@
 import { For, Show, createSignal, type Component } from "solid-js";
 import { activeConnection, connections, setActive } from "~/lib/connections";
-import { type DictKey, locale, t, toggleLocale } from "~/lib/i18n";
+import { type DictKey, localeShortLabel, t, toggleLocale } from "~/lib/i18n";
 import { theme, setTheme, type Theme } from "~/lib/theme";
 import { Button } from "~/components/ui/button";
 import {
@@ -41,7 +41,7 @@ const TopBar: Component<Props> = (props) => {
         onClick={toggleLocale}
         title={t("top.language")}
       >
-        {locale() === "zh" ? "中" : "EN"}
+        {localeShortLabel()}
       </Button>
 
       <Show when={!active()}>

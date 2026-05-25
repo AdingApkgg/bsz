@@ -26,7 +26,7 @@ import {
   type Connection,
 } from "~/lib/connections";
 import { setTheme, theme, type Theme } from "~/lib/theme";
-import { locale, setLocale, t, type Locale } from "~/lib/i18n";
+import { LOCALE_LIST, locale, localeFullLabel, setLocale, t } from "~/lib/i18n";
 import { adminUrl, api, exportDownloadUrl, syncEventSourceUrl } from "~/lib/api";
 
 const Settings: Component = () => {
@@ -251,10 +251,10 @@ const AppearanceCard: Component = () => (
       <div>
         <div class="mb-2 text-xs text-muted-foreground">{t("top.language")}</div>
         <div class="flex gap-2">
-          <For each={["zh", "en"] as Locale[]}>
+          <For each={LOCALE_LIST}>
             {(v) => (
               <Button size="sm" variant={locale() === v ? "default" : "outline"} onClick={() => setLocale(v)}>
-                {v === "zh" ? "中文" : "English"}
+                {localeFullLabel(v)}
               </Button>
             )}
           </For>
