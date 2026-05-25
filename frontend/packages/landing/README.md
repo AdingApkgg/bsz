@@ -20,7 +20,7 @@
 ## 开发
 
 ```bash
-bun run dev          # http://localhost:12706
+bun run dev          # http://localhost:12702
 ```
 
 ## 构建

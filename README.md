@@ -32,7 +32,7 @@ cd backend && ADMIN_TOKEN=test-token cargo run
 
 # Terminal 2 — landing
 cd frontend && bun install
-bun run dev:landing        # http://localhost:12706
+bun run dev:landing        # http://localhost:12702
 
 # Terminal 3 — admin
 bun run dev:admin          # http://localhost:12705

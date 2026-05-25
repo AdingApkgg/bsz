@@ -6,7 +6,7 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
       "cwd": "${workspaceFolder}/frontend/packages/landing",
-      "port": 12706,
+      "port": 12702,
       "env": {
         "VITE_ADMIN_URL": "http://localhost:12705"
       }
