@@ -62,8 +62,7 @@ token 为空时，整个 `/api/admin/*` 路由不存在（404，不是 401）。
 
 ```bash
 # landing → apex
-VITE_ADMIN_URL=https://dash.bsz.example.com \
-  bun run build:landing
+bun run build:landing
 # 产物在 frontend/packages/landing/dist/
 
 # admin → dash

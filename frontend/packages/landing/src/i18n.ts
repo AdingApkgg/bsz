@@ -32,9 +32,6 @@ const dict = {
     example_title: "完整示例",
     example_hint: "复制到 HTML 页面，把 URL 替换成你的后端：",
     code_label: "示例代码",
-    open_dashboard: "进入控制台",
-    backend_setup: "后端搭建",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   en: {
@@ -60,9 +57,6 @@ const dict = {
     example_title: "Full example",
     example_hint: "Paste into your HTML, swap the URL for your backend:",
     code_label: "Snippet",
-    open_dashboard: "Open dashboard",
-    backend_setup: "Backend setup",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   ja: {
@@ -88,9 +82,6 @@ const dict = {
     example_title: "完全な例",
     example_hint: "HTML に貼り付け、URL をあなたのバックエンドに差し替えてください：",
     code_label: "サンプル",
-    open_dashboard: "ダッシュボードを開く",
-    backend_setup: "バックエンド構築",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   ko: {
@@ -116,9 +107,6 @@ const dict = {
     example_title: "전체 예시",
     example_hint: "HTML에 붙여 넣고 URL을 백엔드 주소로 바꾸세요:",
     code_label: "예시 코드",
-    open_dashboard: "대시보드 열기",
-    backend_setup: "백엔드 설치",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   es: {
@@ -144,9 +132,6 @@ const dict = {
     example_title: "Ejemplo completo",
     example_hint: "Pega en tu HTML y cambia la URL por tu backend:",
     code_label: "Fragmento",
-    open_dashboard: "Abrir panel",
-    backend_setup: "Configurar backend",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   fr: {
@@ -172,9 +157,6 @@ const dict = {
     example_title: "Exemple complet",
     example_hint: "Collez dans votre HTML, remplacez l'URL par votre backend :",
     code_label: "Extrait",
-    open_dashboard: "Ouvrir le tableau de bord",
-    backend_setup: "Configurer le backend",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
   de: {
@@ -200,9 +182,6 @@ const dict = {
     example_title: "Vollständiges Beispiel",
     example_hint: "In dein HTML einfügen und die URL auf dein Backend ändern:",
     code_label: "Snippet",
-    open_dashboard: "Dashboard öffnen",
-    backend_setup: "Backend einrichten",
-    github: "GitHub",
     footer_tagline: "Powered by Rust · Frontend by Solid",
   },
 } as const;

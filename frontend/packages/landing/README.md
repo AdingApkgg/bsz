@@ -1,6 +1,6 @@
 # @bsz/landing
 
-介绍页 — 纯静态单页，**不依赖任何后端**。设计上挂在 apex 域名（如 `bsz.example.com`）。
+介绍页 — 纯静态单页，**不依赖任何后端**。设计上挂在 apex 域名（如 `bsz.example.com`）。落地页有意**不暴露管理后台入口** — admin 是单独的应用，部署到 dash 子域，普通访客不需要看到。
 
 ## 内容
 
@@ -8,14 +8,11 @@
 - 特性卡片
 - API 方法列表 + 注意事项
 - HTML 嵌入示例代码
-- 主题切换 (system / light / dark) + 7 语言（zh/en/ja/ko/es/fr/de）
-- 「进入控制台」入口（如果 `VITE_ADMIN_URL` 设了）
+- 右上角：GitHub 链接 + 主题切换 (system / light / dark) + 7 语言（zh / en / ja / ko / es / fr / de）
 
 ## 环境变量
 
-| 变量 | 必需 | 作用 |
-|---|---|---|
-| `VITE_ADMIN_URL` | 否 | 管理后台地址（如 `https://dash.bsz.example.com`）。设了就在 header 和 footer 渲染 CTA；不设则隐藏 |
+无。零环境变量。
 
 ## 开发
 
@@ -26,7 +23,7 @@ bun run dev          # http://localhost:12702
 ## 构建
 
 ```bash
-VITE_ADMIN_URL=https://dash.bsz.example.com bun run build
+bun run build
 # → dist/ (~55 kB gzipped)
 ```
 
@@ -55,21 +52,16 @@ jobs:
         working-directory: frontend
       - run: bun run build:landing
         working-directory: frontend
-        env:
-          VITE_ADMIN_URL: ${{ vars.ADMIN_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: frontend/packages/landing/dist }
       - uses: actions/deploy-pages@v4
 ```
 
-仓库 Settings → Secrets and variables → Actions → Variables → 加 `ADMIN_URL=https://dash.example.com`。
-
 ### Cloudflare Pages
 
 Build command：`cd frontend && bun install && bun run build:landing`
 Output directory：`frontend/packages/landing/dist`
-环境变量：`VITE_ADMIN_URL`
 
 ### nginx (自托管)
 
@@ -84,6 +76,6 @@ server {
 }
 ```
 
-## 不部署 admin 也能用
+## 跟 admin 的关系
 
-landing 完全不依赖 admin 的存在。不设 `VITE_ADMIN_URL` 时只是隐藏 dashboard 入口；其他 UI 一切照常。
+零耦合。访客知道 admin 在哪里只能靠链接外传 / 你在自己的文档里写 dash 子域。landing 本身不会提及 admin 的存在。

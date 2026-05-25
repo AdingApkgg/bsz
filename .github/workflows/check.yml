@@ -67,6 +67,4 @@ jobs:
         run: bun run build:admin
 
       - name: Build landing
-        env:
-          VITE_ADMIN_URL: https://dash.example.com
         run: bun run build:landing
