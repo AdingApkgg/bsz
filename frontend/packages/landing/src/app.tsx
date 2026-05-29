@@ -126,7 +126,7 @@ const Section: Component<{ children: JSX.Element; delay: number }> = (props) => 
 
 const Header: Component = () => (
   <header class="flex items-center justify-end gap-2 px-6 py-4">
-    <a href={GITHUB_URL} rel="noopener" aria-label="GitHub">
+    <a href={GITHUB_URL} target="_blank" rel="noopener" aria-label="GitHub">
       <Button size="sm" variant="ghost" class="h-8 gap-1.5 px-2.5 text-xs">
         <GithubMark />
         <span>GitHub</span>
@@ -377,7 +377,7 @@ const PutSection: Component = () => (
 const Footer: Component = () => (
   <footer class="border-t border-border py-8 text-center text-muted-foreground text-xs">
     <nav class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-      <a href={GITHUB_URL} rel="noopener" class="hover:text-foreground">
+      <a href={GITHUB_URL} target="_blank" rel="noopener" class="hover:text-foreground">
         GitHub
       </a>
       <span aria-hidden="true">·</span>
