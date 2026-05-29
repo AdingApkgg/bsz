@@ -109,7 +109,12 @@ sudo systemctl enable --now bsz
 
 ### Nginx
 
-参考 [`example/nginx.conf`](example/nginx.conf) — HTTP/3 + HTTP/2 + HSTS + SSL，且为 `/api/admin/sync` SSE 端点关闭了 buffer。
+两份示例，按部署拓扑选一份（都带 HTTP/3 + HTTP/2 + HSTS + SSL，且为 `/api/admin/sync` SSE 端点关闭了 buffer）：
+
+| 文件 | 拓扑 |
+|---|---|
+| [`example/nginx.conf`](example/nginx.conf) | **仅反代 API** — 前端单独部署在 GitHub/Cloudflare Pages，nginx 只转发后端，跨域由 axum CORS 处理 |
+| [`example/nginx-all-in-one.conf`](example/nginx-all-in-one.conf) | **单域名一体化** — 同一域名下 `/` 出 landing、`/api` 走后端、`/dash` 出 admin，全在一台 VPS 上 |
 
 ## 数据持久化
 
