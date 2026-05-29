@@ -1,10 +1,9 @@
 import { For, Show, createSignal, type Component } from "solid-js";
 import { A } from "@solidjs/router";
-import { ChevronDown, Moon, Search, Sun } from "lucide-solid";
+import { ChevronDown, Search } from "lucide-solid";
 import { Motion } from "solid-motionone";
 import { activeConnection, connections, setActive } from "~/lib/connections";
 import {
-  type DictKey,
   LOCALE_LIST,
   locale,
   localeFullLabel,
@@ -12,7 +11,6 @@ import {
   setLocale,
   t,
 } from "~/lib/i18n";
-import { theme, setTheme, type Theme } from "@bsz/shared/lib/theme";
 import { Button } from "@bsz/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -45,7 +43,6 @@ const TopBar: Component<Props> = (props) => {
         <kbd class="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
 
-      <ThemeMenu />
       <LanguageMenu />
 
       <Show when={!active()}>
@@ -130,39 +127,5 @@ const LanguageMenu: Component = () => (
     </DropdownMenuContent>
   </DropdownMenu>
 );
-
-const ThemeMenu: Component = () => {
-  const labels: Record<Theme, DictKey> = {
-    system: "theme.system",
-    light: "theme.light",
-    dark: "theme.dark",
-  };
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        // biome-ignore lint/suspicious/noExplicitAny: Kobalte polymorphic `as` prop
-        as={(p: any) => (
-          <Button {...p} size="sm" variant="ghost" class="h-8 w-8 p-0" title={t("top.theme")}>
-            <Show when={theme() === "dark"} fallback={<Sun class="size-4" />}>
-              <Moon class="size-4" />
-            </Show>
-          </Button>
-        )}
-      />
-      <DropdownMenuContent class="w-40">
-        <For each={["system", "light", "dark"] as Theme[]}>
-          {(v) => (
-            <DropdownMenuItem onSelect={() => setTheme(v)}>
-              <span class="flex-1">{t(labels[v])}</span>
-              <Show when={theme() === v}>
-                <span class="text-primary">●</span>
-              </Show>
-            </DropdownMenuItem>
-          )}
-        </For>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
 
 export default TopBar;

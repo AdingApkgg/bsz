@@ -12,6 +12,20 @@
       }
     },
     {
+      "name": "landing-with-demo",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/frontend/packages/landing",
+      "port": 12702,
+      "env": {
+        "VITE_ADMIN_URL": "http://localhost:12705",
+        "VITE_SITE_URL": "https://bsz.saop.cc",
+        "VITE_DEMO_API": "https://bsz.saop.cc",
+        "VITE_ARTALK_SERVER": "https://artalk.saop.cc",
+        "VITE_ARTALK_SITE_NAME": "不蒜子.rs"
+      }
+    },
+    {
       "name": "admin",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],

@@ -26,7 +26,6 @@ import {
   verifyToken,
   type Connection,
 } from "~/lib/connections";
-import { setTheme, theme, type Theme } from "@bsz/shared/lib/theme";
 import { LOCALE_LIST, locale, localeFullLabel, setLocale, t } from "~/lib/i18n";
 import { adminUrl, api, exportDownloadUrl, syncEventSourceUrl } from "~/lib/api";
 
@@ -232,19 +231,6 @@ const AppearanceCard: Component = () => (
       <CardTitle>{t("settings.appearance")}</CardTitle>
     </CardHeader>
     <CardContent class="space-y-4">
-      <div>
-        <div class="mb-2 text-xs text-muted-foreground">{t("top.theme")}</div>
-        <div class="flex gap-2">
-          <For each={["system", "light", "dark"] as Theme[]}>
-            {(v) => (
-              <Button size="sm" variant={theme() === v ? "default" : "outline"} onClick={() => setTheme(v)}>
-                {t(`theme.${v}` as const)}
-              </Button>
-            )}
-          </For>
-        </div>
-      </div>
-      <Separator />
       <div>
         <div class="mb-2 text-xs text-muted-foreground">{t("top.language")}</div>
         <div class="flex gap-2">

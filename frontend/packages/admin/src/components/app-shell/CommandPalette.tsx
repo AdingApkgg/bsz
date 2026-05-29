@@ -10,7 +10,6 @@ import {
   CommandSeparator,
 } from "@bsz/shared/components/ui/command";
 import { LOCALE_LIST, locale, localeFullLabel, setLocale, t } from "~/lib/i18n";
-import { theme, setTheme, type Theme } from "@bsz/shared/lib/theme";
 import { activeConnection, connections, setActive } from "~/lib/connections";
 import { api, type SiteKey, exportDownloadUrl } from "~/lib/api";
 
@@ -48,20 +47,6 @@ const CommandPalette: Component<Props> = (props) => {
           <CommandItem onSelect={() => go("/app/sites")}>{t("cmd.go_sites")}</CommandItem>
           <CommandItem onSelect={() => go("/app/logs")}>{t("cmd.go_logs")}</CommandItem>
           <CommandItem onSelect={() => go("/app/settings")}>{t("cmd.go_settings")}</CommandItem>
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading={t("settings.appearance")}>
-          <CommandItem
-            onSelect={() => {
-              const next: Theme = theme() === "dark" ? "light" : "dark";
-              setTheme(next);
-              props.onOpenChange(false);
-            }}
-          >
-            {t("cmd.toggle_theme")}
-          </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
