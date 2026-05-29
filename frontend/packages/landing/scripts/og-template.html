@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OG image source</title>
+    <style>
+      :root { --primary: 217 91% 60%; }
+      html, body {
+        margin: 0; padding: 0;
+        width: 1200px; height: 630px;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: #0a0a0a;
+        display: flex; align-items: center; justify-content: center;
+        -webkit-font-smoothing: antialiased;
+      }
+      .row { display: flex; align-items: center; gap: 1.75rem; }
+      .logo {
+        width: 7rem; height: 7rem;
+        border-radius: 1.75rem;
+        background: hsl(var(--primary) / 0.15);
+        color: hsl(var(--primary));
+        display: flex; align-items: center; justify-content: center;
+      }
+      .logo svg { width: 5rem; height: 5rem; fill: currentColor; }
+      .brand { display: flex; flex-direction: column; }
+      h1 { margin: 0; font-size: 7rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1; }
+      p { margin: 1.25rem 0 0; font-size: 2rem; color: #71717a; font-weight: 400; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 12l9-9 9 9-9 9-9-9zm9-6.5L5.5 12 12 18.5 18.5 12 12 5.5z" />
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>不蒜子.rs</h1>
+        <p>网站访客统计 · 自托管 · 单二进制</p>
+      </div>
+    </div>
+  </body>
+</html>

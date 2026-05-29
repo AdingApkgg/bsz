@@ -13,6 +13,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   BINARY_NAME: busuanzi
+  MANIFEST: backend/Cargo.toml
 
 jobs:
   build:
@@ -85,25 +86,24 @@ jobs:
 
       - name: Build (native)
         if: "!matrix.cross"
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --manifest-path ${{ env.MANIFEST }} --target ${{ matrix.target }}
 
       - name: Build (cross)
         if: matrix.cross
+        working-directory: backend
         run: cross build --release --target ${{ matrix.target }}
 
       - name: Prepare artifact (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../${{ env.BINARY_NAME }}-${{ matrix.target }}.tar.gz ${{ env.BINARY_NAME }}-rs
-          cd ../../..
+          cd backend/target/${{ matrix.target }}/release
+          tar czf ${{ github.workspace }}/${{ env.BINARY_NAME }}-${{ matrix.target }}.tar.gz ${{ env.BINARY_NAME }}-rs
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
         run: |
-          cd target/${{ matrix.target }}/release
-          7z a ../../../${{ env.BINARY_NAME }}-${{ matrix.target }}.zip ${{ env.BINARY_NAME }}-rs.exe
-          cd ../../..
+          cd backend/target/${{ matrix.target }}/release
+          7z a ${{ github.workspace }}/${{ env.BINARY_NAME }}-${{ matrix.target }}.zip ${{ env.BINARY_NAME }}-rs.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

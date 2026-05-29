@@ -1,0 +1,26 @@
+{
+  "name": "busuanzi-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:admin": "bun --filter @bsz/admin dev",
+    "dev:landing": "bun --filter @bsz/landing dev",
+    "build": "bun --filter '*' build",
+    "build:admin": "bun --filter @bsz/admin build",
+    "build:landing": "bun --filter @bsz/landing build",
+    "typecheck": "bun --filter '*' typecheck",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "check": "bun run format:check && bun run lint && bun run typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

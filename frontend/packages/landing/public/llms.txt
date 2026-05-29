@@ -1,0 +1,121 @@
+# Busuanzi — self-hosted visitor counter
+
+> A minimal, drop-in visitor counter compatible with the original
+> busuanzi.ibruce.info script. Single Rust binary, SQLite-backed,
+> optional pluggable web dashboard.
+
+Landing site:   __SITE_URL__/
+Source code:    https://github.com/AdingApkgg/bsz
+Long-form docs: __SITE_URL__/llms-full.txt  (expanded version of this file,
+                with every section rendered as markdown for IDE assistants)
+
+This document is written for LLM crawlers and assistants. It mirrors the
+public landing page in plain text. See `llms-full.txt` above for the
+full expanded variant.
+
+## Localization
+
+The landing site is published in three locales:
+- Chinese (default): __SITE_URL__/
+- English:           __SITE_URL__/en
+- Japanese:          __SITE_URL__/ja
+
+## Concepts
+
+A Busuanzi backend tracks three counters:
+- `site_pv` — total page views across the entire site
+- `site_uv` — unique visitors across the entire site
+- `page_pv` — page views for the URL identified by `x-bsz-referer`
+
+Visitor identity comes from a `busuanziId` cookie (MD5(IP + User-Agent)
+in uppercase hex, 1-year lifetime). The scheme is wire-compatible with
+the original busuanzi service, so existing client snippets keep working.
+
+## HTTP API
+
+All API endpoints live under the backend you deploy yourself. The
+landing site does NOT run an API — it's a static page documenting
+what your backend exposes.
+
+Replace `<your-backend>` with your deployed origin (e.g. `https://bsz.example.com`).
+
+### POST /api — count this hit and return current totals
+
+```javascript
+const res = await fetch("<your-backend>/api", {
+  method: "POST",
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
+});
+const { data } = await res.json();
+// data.site_pv, data.site_uv, data.page_pv
+```
+
+### GET /api — read totals without counting
+
+Useful for dashboards that should not inflate their own counts.
+
+```javascript
+const res = await fetch("<your-backend>/api", {
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
+});
+```
+
+### PUT /api — count this hit, return no body
+
+Useful when you only want to record the visit and don't need to
+display the numbers.
+
+```javascript
+await fetch("<your-backend>/api", {
+  method: "PUT",
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
+});
+```
+
+### GET /ping — health check
+
+Returns 200 OK if the backend is reachable.
+
+## Required headers
+
+- `x-bsz-referer` — full URL of the page being counted. The backend
+  uses this (not the browser-sent `Referer`) to identify the page,
+  so it works for cross-origin embeds.
+
+## Response shape
+
+```json
+{
+  "success": true,
+  "data": {
+    "site_pv": 1234,
+    "site_uv": 567,
+    "page_pv": 89
+  }
+}
+```
+
+`success: false` indicates a request that was accepted but not
+counted — typically a malformed `x-bsz-referer`.
+
+## Cookies
+
+- `busuanziId` — visitor identity. Set by the backend on the first
+  request; sent back on subsequent requests with `credentials: "include"`.
+
+For cross-origin requests the browser will only send the cookie if
+the request includes `credentials: "include"`. CORS on the backend
+must reply with `Access-Control-Allow-Credentials: true` and a
+specific (non-wildcard) `Access-Control-Allow-Origin`.
+
+## Stack
+
+- Rust + Axum (HTTP server)
+- SQLite (durable storage)
+- DashMap (in-process cache)
+- Optional decoupled admin SPA (Solid + Vite), guarded by
+  `ADMIN_TOKEN` — when the env var is unset, no admin routes mount
+  on the backend.

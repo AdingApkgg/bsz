@@ -1,9 +1,30 @@
-# Build
+# Rust build
 /target
+/backend/target
 
-# Environment
+# Node
+node_modules/
+**/node_modules
+
+# Frontend build outputs
+.output/
+.vinxi/
+.solid/
+dist/
+build/
+
+# Environment — follow Vite's load order (https://vitejs.dev/guide/env-and-mode):
+#   .env                  committed defaults (no secrets)
+#   .env.local            local-only overrides (gitignored)
+#   .env.<mode>           committed mode-specific defaults
+#   .env.<mode>.local     local-only mode-specific overrides (gitignored)
+#   .env.example          committed template — copy to .env.local and fill in
 .env
-!example/.env
+.env.local
+.env.*.local
+!**/example/.env
+!.env.example
+!**/.env.example
 
 # Data files
 data.db

@@ -1,0 +1,272 @@
+# Busuanzi — self-hosted visitor counter
+
+> A minimal, drop-in visitor counter compatible with the original
+> busuanzi.ibruce.info script. Single Rust binary, SQLite-backed,
+> optional pluggable web dashboard. Decoupled architecture: ship just
+> the backend, or pair it with the bundled Solid admin SPA.
+
+Landing site: __SITE_URL__/
+Source code: https://github.com/AdingApkgg/bsz
+LLM index: __SITE_URL__/llms.txt (this file is the expanded variant)
+
+This file is the long-form companion to `llms.txt`, intended for IDE
+assistants (Cursor, Cline, Continue, Aider) and chat agents that
+benefit from the full landing-page content rendered as markdown.
+Section anchors below mirror the live URL fragments.
+
+---
+
+## Table of contents
+
+- [Localization](#localization)
+- [Concepts](#concepts)
+- [Features](#features) → __SITE_URL__/#features
+- [API endpoints](#api-endpoints) → __SITE_URL__/#api
+- [Response shape](#response-shape) → __SITE_URL__/#response
+- [Quick start](#quick-start) → __SITE_URL__/#quickstart
+- [Full example](#full-example) → __SITE_URL__/#example
+- [Read-only (GET)](#read-only-get) → __SITE_URL__/#get
+- [Silent submit (PUT)](#silent-submit-put) → __SITE_URL__/#put
+- [Headers](#headers)
+- [Cookies and CORS](#cookies-and-cors)
+- [Stack](#stack)
+- [Deploy notes](#deploy-notes)
+
+---
+
+## Localization
+
+The landing site publishes three locales. Comments are shared across
+all three (single thread, pinned to the origin root).
+
+- Chinese (default): __SITE_URL__/
+- English:           __SITE_URL__/en
+- Japanese:          __SITE_URL__/ja
+
+`hreflang` link tags + `og:locale:alternate` meta tags + a sitemap with
+`xhtml:link` cross-references are emitted per-route. The `x-default`
+URL points at the apex (zh).
+
+---
+
+## Concepts
+
+A Busuanzi backend tracks three counters:
+
+| Field     | Meaning                                      |
+| --------- | -------------------------------------------- |
+| `site_pv` | Total page views across the entire site      |
+| `site_uv` | Unique visitors across the entire site       |
+| `page_pv` | Page views for the URL in `x-bsz-referer`    |
+
+Visitor identity comes from a `busuanziId` cookie — `MD5(IP + UserAgent)`
+in uppercase hex, 1-year lifetime. The scheme is wire-compatible with
+the original busuanzi service, so existing client snippets keep working.
+
+---
+
+## Features
+
+- Zero external runtime dependencies (pure Rust binary).
+- Single binary distribution — drop the executable next to a config and
+  systemd unit, done.
+- SQLite persistence; no separate DB process to operate.
+- In-memory cache (DashMap) for hot paths, periodic flush to SQLite.
+- Drop-in compatibility with the original busuanzi `busuanziId` cookie.
+- Pluggable dashboard: ship just the backend, or pair with the bundled
+  Solid admin SPA. The admin SPA is decoupled and deployable to any
+  static host (GitHub Pages, Cloudflare Pages, Netlify).
+
+---
+
+## API endpoints
+
+All endpoints live under whichever backend origin you deploy. Substitute
+`<your-backend>` with that origin — e.g. `https://bsz.example.com`.
+
+| Method | Path    | Purpose                                                  |
+| ------ | ------- | -------------------------------------------------------- |
+| POST   | /api    | Count this hit AND return current totals (the common case) |
+| GET    | /api    | Read totals WITHOUT counting (dashboards, status pages)  |
+| PUT    | /api    | Count this hit, return no body (silent, fire-and-forget) |
+| GET    | /ping   | Health check — returns 200 OK if the backend is live     |
+
+Admin routes (`/api/admin/*`) only mount when the `ADMIN_TOKEN`
+environment variable is set on the backend. When unset, the backend
+exposes only the four public endpoints above, and the admin SPA is
+effectively a static page with no live target.
+
+---
+
+## Response shape
+
+All three counting endpoints (`POST /api`, `GET /api`) return:
+
+```json
+{
+  "success": true,
+  "data": {
+    "site_pv": 1234,
+    "site_uv": 567,
+    "page_pv": 89
+  }
+}
+```
+
+- `success: false` indicates the request was accepted but not counted —
+  typically a malformed `x-bsz-referer`.
+- `PUT /api` returns `204 No Content` on success; no body to parse.
+
+---
+
+## Quick start
+
+Three steps to add visitor stats to any HTML page.
+
+### 1. Send the request
+
+```javascript
+const res = await fetch("<your-backend>/api", {
+  method: "POST",
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
+});
+```
+
+### 2. Parse the response
+
+```javascript
+const { success, data } = await res.json();
+// data.site_pv  → total site page views
+// data.site_uv  → unique site visitors
+// data.page_pv  → views for the current page
+```
+
+### 3. Render
+
+```javascript
+document.getElementById("pv").textContent = data.site_pv;
+document.getElementById("uv").textContent = data.site_uv;
+document.getElementById("ppv").textContent = data.page_pv;
+```
+
+---
+
+## Full example
+
+A self-contained snippet you can paste into any HTML page. Swap the URL
+for your backend.
+
+```html
+<p>Site views <span id="pv">…</span> · Visitors <span id="uv">…</span></p>
+<p>This page <span id="ppv">…</span></p>
+
+<script>
+(async () => {
+  const res = await fetch("https://your-backend.example.com/api", {
+    method: "POST",
+    credentials: "include",
+    headers: { "x-bsz-referer": location.href },
+  });
+  const { success, data } = await res.json();
+  if (!success) return;
+  document.getElementById("pv").textContent = data.site_pv;
+  document.getElementById("uv").textContent = data.site_uv;
+  document.getElementById("ppv").textContent = data.page_pv;
+})();
+</script>
+```
+
+---
+
+## Read-only (GET)
+
+Use `GET` to read counts without incrementing. Ideal for dashboards,
+status pages, or any view that re-renders frequently and shouldn't
+inflate its own numbers.
+
+```javascript
+const res = await fetch("<your-backend>/api", {
+  headers: { "x-bsz-referer": "https://your-site.com/page" },
+});
+const { data } = await res.json();
+```
+
+---
+
+## Silent submit (PUT)
+
+Use `PUT` to record a hit without reading the response body. Useful
+when you only want to track the visit and don't need to display the
+counts on the same page.
+
+```javascript
+fetch("<your-backend>/api", {
+  method: "PUT",
+  credentials: "include",
+  headers: { "x-bsz-referer": location.href },
+});
+```
+
+---
+
+## Headers
+
+- `x-bsz-referer` (required) — full URL of the page being counted. The
+  backend uses this (not the browser-sent `Referer`) to identify the
+  page, so it keeps working for cross-origin embeds where the browser
+  strips Referer.
+
+---
+
+## Cookies and CORS
+
+- `busuanziId` — visitor identity. The backend sets it on the first
+  request and reads it on subsequent ones.
+- Cross-origin embeds MUST pass `credentials: "include"` to send the
+  cookie back.
+- The backend's CORS policy must respond with
+  `Access-Control-Allow-Credentials: true` AND a specific (non-`*`)
+  `Access-Control-Allow-Origin` matching the embedding site.
+- In production deployments where the landing and backend share an
+  origin (e.g. `https://bsz.example.com` serving both static landing +
+  `/api`), no CORS work is needed — the cookie is same-origin.
+
+---
+
+## Stack
+
+- Rust + Axum (HTTP server)
+- SQLite (durable storage, single file)
+- DashMap (in-process cache for hot reads)
+- Tokio (async runtime)
+- Optional admin SPA: Solid + Vite + Kobalte UI, gated behind
+  `ADMIN_TOKEN`. When the env var is unset, no admin routes mount on
+  the backend and the SPA acts as a frontend-only template.
+
+---
+
+## Deploy notes
+
+- Landing builds to a static `dist/` and works on any static host
+  (GitHub Pages, Cloudflare Pages, Netlify, Vercel). 404.html and
+  `_redirects` are emitted so SPA deep links (`/en`, `/ja`) survive.
+- Set `VITE_SITE_URL` to bake the canonical origin into
+  `sitemap.xml`, `robots.txt`, `llms.txt`, and the static `og:image`
+  URL inside `index.html`.
+- Set `VITE_DEMO_API` to wire the live PV/UV grid at the top of the
+  landing to a reachable backend. Unset → the grid is hidden.
+- Set `VITE_ARTALK_SERVER` (and optionally `VITE_ARTALK_SITE_NAME`) to
+  enable the Artalk comments section at the bottom. The Artalk
+  `pageKey` is pinned to `${location.origin}/`, so all three locale
+  routes share one thread.
+- The backend ships as a single binary plus a TOML config; see
+  `backend/example/.env` and `backend/example/bsz.service` in the
+  repo for a starting point.
+
+---
+
+## License
+
+See https://github.com/AdingApkgg/bsz for the canonical LICENSE and
+project metadata.

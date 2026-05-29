@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Static fallback values for no-JS crawlers / first paint. The apex
+         route is zh-CN, so the defaults match that locale. src/i18n.ts
+         reactively overrides title, description, og:*, twitter:* per
+         route once the SPA hydrates. -->
+    <title>不蒜子 · 自托管的网站访客计数器</title>
+    <meta
+      name="description"
+      content="不蒜子是一个简洁的网站访客统计服务，零依赖、单一二进制、兼容原版 busuanzi。支持 site_pv、site_uv、page_pv 统计与 RESTful API。"
+    />
+    <meta
+      name="keywords"
+      content="busuanzi,不蒜子,visitor counter,网站统计,page view,PV,UV,self-hosted,rust,sqlite"
+    />
+    <meta name="author" content="AdingApkgg" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="不蒜子 · 自托管的网站访客计数器" />
+    <meta
+      property="og:description"
+      content="简洁的网站访客统计服务，零依赖、单一二进制、兼容原版 busuanzi。"
+    />
+    <meta property="og:site_name" content="Busuanzi" />
+    <!-- og:locale, og:locale:alternate, og:url, canonical, and hreflang
+         links are emitted/updated reactively per-route by src/i18n.ts.
+         __SITE_URL__ here gets substituted by scripts/postbuild.ts so
+         crawlers see absolute image URLs in the static HTML. -->
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:image" content="__SITE_URL__/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="不蒜子.rs — 自托管的网站访客计数器" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="不蒜子 · 自托管的网站访客计数器" />
+    <meta
+      name="twitter:description"
+      content="简洁的网站访客统计服务，零依赖、单一二进制。"
+    />
+    <meta name="twitter:image" content="__SITE_URL__/og.png" />
+    <meta name="twitter:image:alt" content="不蒜子.rs — 自托管的网站访客计数器" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Busuanzi",
+        "alternateName": "不蒜子",
+        "description": "Self-hosted visitor counter. Zero deps, single binary, SQLite persistence.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Linux, macOS, Windows",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": {
+          "@type": "Person",
+          "name": "AdingApkgg",
+          "url": "https://github.com/AdingApkgg"
+        },
+        "codeRepository": "https://github.com/AdingApkgg/bsz",
+        "screenshot": "__SITE_URL__/og.png",
+        "image": "__SITE_URL__/og.png",
+        "inLanguage": ["zh-CN", "en", "ja"],
+        "softwareHelp": { "@type": "CreativeWork", "url": "__SITE_URL__/llms.txt" }
+      }
+    </script>
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M3 12l9-9 9 9-9 9-9-9zm9-6.5L5.5 12 12 18.5 18.5 12 12 5.5z'/></svg>"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

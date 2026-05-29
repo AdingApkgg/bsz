@@ -1,0 +1,32 @@
+# Busuanzi systemd service
+# 安装: sudo cp bsz.service /etc/systemd/system/
+# 启用: sudo systemctl enable --now bsz
+
+[Unit]
+Description=Busuanzi Visitor Statistics
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/bsz
+ExecStart=/opt/bsz/busuanzi-rs
+Restart=on-failure
+RestartSec=5
+
+# 环境变量 (或使用 .env 文件)
+Environment=PORT=12700
+# 留空则 /api/admin/* 完全不挂载（公开统计 API 仍可用）。
+Environment=ADMIN_TOKEN=
+Environment=SAVE_INTERVAL=30
+
+# 安全加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/bsz
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
