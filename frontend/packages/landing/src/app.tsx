@@ -384,11 +384,21 @@ const Footer: Component = () => (
       {/* /llms.txt and /sitemap.xml are emitted by the postbuild script,
           /robots.txt is reachable too — these are the conventional URLs
           crawlers and curious humans look for, so keep them surfaced. */}
-      <a href="/llms.txt" class="hover:text-foreground">
+      <a
+        href="/llms.txt"
+        target="_blank"
+        rel="noopener external"
+        class="hover:text-foreground"
+      >
         llms.txt
       </a>
       <span aria-hidden="true">·</span>
-      <a href="/sitemap.xml" class="hover:text-foreground">
+      <a
+        href="/sitemap.xml"
+        target="_blank"
+        rel="noopener external"
+        class="hover:text-foreground"
+      >
         sitemap
       </a>
     </nav>
