@@ -49,7 +49,7 @@ const dict = {
     quickstart_title: "快速接入",
     quickstart_hint: "几行代码即可为网站加上访客统计：",
     quickstart_step1: "发送请求",
-    quickstart_step1_text: "向后端 /api 发 POST 请求，带 credentials: \"include\" 与 x-bsz-referer 头。",
+    quickstart_step1_text: '向后端 /api 发 POST 请求，带 credentials: "include" 与 x-bsz-referer 头。',
     quickstart_step2: "解析响应",
     quickstart_step2_text: "await res.json() 取出 { success, data: { site_pv, site_uv, page_pv } }。",
     quickstart_step3: "展示数据",
@@ -100,7 +100,8 @@ const dict = {
     quickstart_title: "Quick start",
     quickstart_hint: "Add visitor stats to your site in a few lines:",
     quickstart_step1: "Send the request",
-    quickstart_step1_text: "POST to your backend /api with credentials: \"include\" and an x-bsz-referer header.",
+    quickstart_step1_text:
+      'POST to your backend /api with credentials: "include" and an x-bsz-referer header.',
     quickstart_step2: "Parse the response",
     quickstart_step2_text: "await res.json() to read { success, data: { site_pv, site_uv, page_pv } }.",
     quickstart_step3: "Render",
@@ -151,7 +152,8 @@ const dict = {
     quickstart_title: "クイックスタート",
     quickstart_hint: "数行で訪問統計を追加できます：",
     quickstart_step1: "リクエスト送信",
-    quickstart_step1_text: "バックエンドの /api に POST。credentials: \"include\" と x-bsz-referer ヘッダー必須。",
+    quickstart_step1_text:
+      'バックエンドの /api に POST。credentials: "include" と x-bsz-referer ヘッダー必須。',
     quickstart_step2: "レスポンス解析",
     quickstart_step2_text: "await res.json() で { success, data: { site_pv, site_uv, page_pv } } を取得。",
     quickstart_step3: "表示",
@@ -196,8 +198,7 @@ export function localePath(l: Locale): string {
 
 // Initial value matches the URL the user landed on, so SSR-less hydration
 // doesn't flash zh strings while we wait for the router to mount.
-const initialLocale =
-  typeof location === "undefined" ? "zh" : parseLocaleFromPath(location.pathname);
+const initialLocale = typeof location === "undefined" ? "zh" : parseLocaleFromPath(location.pathname);
 const [locale, setLocaleSignal] = createSignal<Locale>(initialLocale);
 export { locale };
 

@@ -1,13 +1,4 @@
-import {
-  For,
-  Show,
-  Suspense,
-  createEffect,
-  lazy,
-  onMount,
-  type Component,
-  type JSX,
-} from "solid-js";
+import { For, Show, Suspense, createEffect, lazy, onMount, type Component, type JSX } from "solid-js";
 import { Motion } from "solid-motionone";
 import { Navigate, Route, Router, useLocation, useNavigate } from "@solidjs/router";
 import { Button } from "@bsz/shared/components/ui/button";
@@ -424,10 +415,7 @@ const LanguageButton: Component = () => {
       <DropdownMenuContent class="w-36">
         <For each={LOCALE_LIST}>
           {(v) => (
-            <DropdownMenuItem
-              onSelect={() => switchTo(v)}
-              class="flex items-center justify-between"
-            >
+            <DropdownMenuItem onSelect={() => switchTo(v)} class="flex items-center justify-between">
               <span>{localeFullLabel(v)}</span>
               <Show when={locale() === v}>
                 <span class="text-primary">●</span>

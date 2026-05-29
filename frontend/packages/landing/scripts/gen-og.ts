@@ -13,9 +13,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const CHROME_BIN =
-  process.env.CHROME_BIN ??
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const CHROME_BIN = process.env.CHROME_BIN ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 if (!existsSync(CHROME_BIN)) {
   console.error(

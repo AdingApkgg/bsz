@@ -3,14 +3,7 @@ import { A } from "@solidjs/router";
 import { ChevronDown, Search } from "lucide-solid";
 import { Motion } from "solid-motionone";
 import { activeConnection, connections, setActive } from "~/lib/connections";
-import {
-  LOCALE_LIST,
-  locale,
-  localeFullLabel,
-  localeShortLabel,
-  setLocale,
-  t,
-} from "~/lib/i18n";
+import { LOCALE_LIST, locale, localeFullLabel, localeShortLabel, setLocale, t } from "~/lib/i18n";
 import { Button } from "@bsz/shared/components/ui/button";
 import {
   DropdownMenu,

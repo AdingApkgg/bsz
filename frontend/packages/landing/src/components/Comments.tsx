@@ -26,7 +26,6 @@ const ARTALK_LOCALE: Record<Locale, string | typeof jaLocale> = {
   ja: jaLocale,
 };
 
-
 const Comments: Component = () => {
   let host!: HTMLDivElement;
   const [failed, setFailed] = createSignal(false);
@@ -42,9 +41,7 @@ const Comments: Component = () => {
       // the host AND the sidebar layer wrapper (the layer also keys its
       // palette off that class). We watch `html.dark` so OS preference
       // flips push through `instance.update({ darkMode })`.
-      const themeObserver_ = new MutationObserver(() =>
-        instance?.update?.({ darkMode: isDark() }),
-      );
+      const themeObserver_ = new MutationObserver(() => instance?.update?.({ darkMode: isDark() }));
       themeObserver_.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["class"],

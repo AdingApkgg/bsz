@@ -47,13 +47,7 @@ if (!rawSiteUrl) {
 // `screenshot` etc. point at absolute URLs in the pre-hydration HTML
 // crawlers fetch. (404.html is copied from index.html below, so it
 // inherits the substitution.)
-const SUBSTITUTE = [
-  "index.html",
-  "llms.txt",
-  "llms-full.txt",
-  "robots.txt",
-  "sitemap.xml",
-];
+const SUBSTITUTE = ["index.html", "llms.txt", "llms-full.txt", "robots.txt", "sitemap.xml"];
 for (const name of SUBSTITUTE) {
   const path = join(OUT, name);
   if (!existsSync(path)) continue;
@@ -79,10 +73,7 @@ function loadEnvFile(path: string, shellKeys: Set<string>) {
     if (eq < 0) continue;
     const key = line.slice(0, eq).trim();
     let val = line.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
     if (shellKeys.has(key)) continue;
