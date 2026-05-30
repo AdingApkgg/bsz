@@ -1,5 +1,5 @@
 import { For, Show, createSignal, type Component } from "solid-js";
-import { A } from "@solidjs/router";
+import { A, useNavigate } from "@solidjs/router";
 import { ChevronDown, Search } from "lucide-solid";
 import { Motion } from "solid-motionone";
 import { activeConnection, connections, setActive } from "~/lib/connections";
@@ -52,6 +52,7 @@ const TopBar: Component<Props> = (props) => {
 const ConnectionMenu: Component = () => {
   const active = () => activeConnection();
   const [open, setOpen] = createSignal(false);
+  const navigate = useNavigate();
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
       <DropdownMenuTrigger
@@ -85,10 +86,8 @@ const ConnectionMenu: Component = () => {
           )}
         </For>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => window.location.assign("/welcome")}>
-          + {t("top.add_connection")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => window.location.assign("/app/settings")}>
+        <DropdownMenuItem onSelect={() => navigate("/welcome")}>+ {t("top.add_connection")}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/app/settings")}>
           {t("settings.connections")}…
         </DropdownMenuItem>
       </DropdownMenuContent>
